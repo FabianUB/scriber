@@ -12,13 +12,14 @@ Supported objects
 - Altair: `alt.Chart` (requires `vl-convert-python`)
 
 Notes
-- Rendering uses PNG rasterization for reliability; vector (SVG) may be added later.
+- Rendering prefers vector (SVG) for Plotly/Altair when `svglib` is installed; otherwise falls back to PNG.
 - If only `width` or `height` is provided, aspect ratio is preserved.
 - `align` accepts `start|center|end`. `caption` renders in a muted style under the figure.
 - Optional dependencies are not installed by default. Add them as needed:
   - `uv add matplotlib` for Matplotlib/Seaborn/Plotnine
-  - `uv add kaleido plotly` for Plotly
+  - `uv add plotly kaleido` for Plotly
   - `uv add altair vl-convert-python` for Altair
+  - `uv add svglib` for SVG-to-ReportLab conversion (optional, improves crispness)
 
 Example (Matplotlib)
 ```
@@ -34,4 +35,3 @@ with pdf.document("out_fig.pdf", theme="shadcn"):
         ui.h3("Line Plot")
         ui.figure(fig, caption="Simple line plot")
 ```
-

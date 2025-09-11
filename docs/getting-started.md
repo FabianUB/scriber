@@ -34,6 +34,24 @@ uv run python examples/charts_matplotlib.py
 
 Output: `examples/output_charts_matplotlib.pdf`
 
+Plotly example (install first: `uv add plotly kaleido`):
+
+```
+uv run python examples/charts_plotly.py
+```
+
+Altair example (install first: `uv add altair vl-convert-python`):
+
+```
+uv run python examples/charts_altair.py
+```
+
+Tip: Install `svglib` for vector SVG rendering with Plotly/Altair:
+
+```
+uv add svglib
+```
+
 ## Minimal Usage
 
 ```

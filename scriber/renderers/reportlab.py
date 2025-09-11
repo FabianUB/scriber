@@ -32,6 +32,10 @@ from ..core.nodes import (
 from ..document import Document
 from reportlab.lib.utils import ImageReader
 import io
+try:
+    from svglib.svglib import svg2rlg  # type: ignore
+except Exception:  # optional dependency
+    svg2rlg = None
 
 
 PAGE_SIZES = {
@@ -318,7 +322,7 @@ def _spacer_flowable(doc: Document, node: SpacerNode, styles) -> Flowable:
     return Spacer(1, h)
 
 
-def _figure_to_png_bytes(obj, dpi: int) -> bytes:
+def _figure_export(obj, dpi: int) -> Tuple[str, bytes]:
     # Matplotlib / Seaborn / Plotnine path
     try:
         import matplotlib
@@ -352,8 +356,11 @@ def _figure_to_png_bytes(obj, dpi: int) -> bytes:
             import plotly.graph_objects as go  # type: ignore
 
             if isinstance(obj, go.Figure):
+                if svg2rlg is not None:
+                    svg = pio.to_image(obj, format="svg", scale=1)
+                    return ("svg", svg)
                 png = pio.to_image(obj, format="png", scale=max(dpi / 72, 1))
-                return png
+                return ("png", png)
         except Exception:
             pass
 
@@ -361,8 +368,13 @@ def _figure_to_png_bytes(obj, dpi: int) -> bytes:
     if alt is not None and vlc is not None:
         try:
             if isinstance(obj, alt.Chart):
+                if svg2rlg is not None:
+                    svg = vlc.vegalite_to_svg(obj.to_json(), scale=1)
+                    if isinstance(svg, str):
+                        svg = svg.encode("utf-8")
+                    return ("svg", svg)
                 png = vlc.vegalite_to_png(obj.to_json(), scale=max(dpi / 72, 1))
-                return png
+                return ("png", png)
         except Exception:
             pass
 
@@ -377,18 +389,18 @@ def _figure_to_png_bytes(obj, dpi: int) -> bytes:
 
             fig = plt.gcf()
             fig.savefig(bio, format="png", dpi=dpi, bbox_inches="tight")
-            return bio.getvalue()
+            return ("png", bio.getvalue())
     except Exception:
         pass
 
     # Matplotlib Figure/Axes
     if MplFigure and isinstance(obj, MplFigure):
         obj.savefig(bio, format="png", dpi=dpi, bbox_inches="tight")
-        return bio.getvalue()
+        return ("png", bio.getvalue())
     if MplAxes and isinstance(obj, MplAxes):
         fig = obj.figure
         fig.savefig(bio, format="png", dpi=dpi, bbox_inches="tight")
-        return bio.getvalue()
+        return ("png", bio.getvalue())
 
     raise TypeError(
         "Unsupported figure type. Pass a Matplotlib Figure/Axes, plotnine ggplot, Plotly Figure (requires kaleido), or Altair Chart (requires vl-convert-python)."
@@ -399,30 +411,54 @@ def _figure_flowables(doc: Document, node: FigureNode, styles) -> List[Flowable]
     theme = doc.theme
     obj = node.props.get("obj")
     dpi = node.props.get("dpi", 144)
-    png = _figure_to_png_bytes(obj, dpi)
+    fmt, data = _figure_export(obj, dpi)
 
-    # Determine size
-    reader = ImageReader(io.BytesIO(png))
-    px_w, px_h = reader.getSize()
     width = node.props.get("width")
     height = node.props.get("height")
-    if width and height:
-        target_w, target_h = width, height
-    elif width:
-        scale = width / float(px_w / 2)  # default scale halves 144dpi -> 72pt
-        target_w, target_h = width, (px_h / 2) * scale
-    elif height:
-        scale = height / float(px_h / 2)
-        target_w, target_h = (px_w / 2) * scale, height
+    flows: List[Flowable] = []
+
+    if fmt == "svg" and svg2rlg is not None:
+        drawing = svg2rlg(io.BytesIO(data))
+        dw, dh = float(getattr(drawing, 'width', 0) or 0), float(getattr(drawing, 'height', 0) or 0)
+        if width or height:
+            if width and height and dw and dh:
+                s = min(width / dw, height / dh)
+            elif width and dw:
+                s = width / dw
+            elif height and dh:
+                s = height / dh
+            else:
+                s = 1
+            drawing.width, drawing.height = dw * s, dh * s
+            drawing.scale(s, s)
+        align = node.props.get("align", "start")
+        t = Table([[drawing]])
+        t.setStyle(TableStyle([
+            ("ALIGN", (0,0), (-1,-1), {"start":"LEFT","center":"CENTER","end":"RIGHT"}.get(align, "LEFT")),
+            ("LEFTPADDING", (0,0), (-1,-1), 0),
+            ("RIGHTPADDING", (0,0), (-1,-1), 0),
+            ("TOPPADDING", (0,0), (-1,-1), 0),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 0),
+        ]))
+        flows.append(t)
     else:
-        # Default: assume created at 144dpi; render at half pixel dims to approx 72pt
-        target_w, target_h = px_w / 2, px_h / 2
+        reader = ImageReader(io.BytesIO(data))
+        px_w, px_h = reader.getSize()
+        if width and height:
+            target_w, target_h = width, height
+        elif width:
+            scale = width / float(px_w / 2)
+            target_w, target_h = width, (px_h / 2) * scale
+        elif height:
+            scale = height / float(px_h / 2)
+            target_w, target_h = (px_w / 2) * scale, height
+        else:
+            target_w, target_h = px_w / 2, px_h / 2
+        img = Image(io.BytesIO(data), width=target_w, height=target_h)
+        align = node.props.get("align", "start")
+        img.hAlign = {"start": "LEFT", "center": "CENTER", "end": "RIGHT"}.get(align, "LEFT")
+        flows.append(img)
 
-    img = Image(io.BytesIO(png), width=target_w, height=target_h)
-    align = node.props.get("align", "start")
-    img.hAlign = {"start": "LEFT", "center": "CENTER", "end": "RIGHT"}.get(align, "LEFT")
-
-    flows: List[Flowable] = [img]
     caption = node.props.get("caption")
     if caption:
         cap = Paragraph(caption, styles["Muted"])
