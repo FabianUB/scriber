@@ -100,3 +100,44 @@ def get_theme(name: str) -> Theme:
     if not fn:
         return default_theme()
     return fn()
+
+
+# --- Size resolution helpers ---
+
+def spacing_value(theme: Theme, value, *, default_key: str = "md") -> float:
+    """Resolve a spacing token or numeric into a point value.
+
+    - If value is None: use theme.spacing[default_key]
+    - If str: look up in theme.spacing
+    - If int/float: use directly (treated as points)
+    """
+    if value is None:
+        return float(theme.spacing[default_key])
+    if isinstance(value, str):
+        return float(theme.spacing.get(value, theme.spacing[default_key]))
+    try:
+        return float(value)
+    except Exception:
+        return float(theme.spacing[default_key])
+
+
+def size_token(theme: Theme, value, *, choices=("sm", "md", "lg")) -> str:
+    """Resolve a control size token from a token or numeric value.
+
+    - If value is a valid token: return it
+    - If numeric: map by thresholds using theme.spacing: <= sm -> sm, <= md -> md, else lg
+    """
+    if isinstance(value, str) and value in choices:
+        return value
+    # Numeric mapping by spacing thresholds
+    sm = float(theme.spacing.get("sm", 8))
+    md = float(theme.spacing.get("md", 12))
+    try:
+        v = float(value)
+    except Exception:
+        return "md"
+    if v <= sm:
+        return "sm"
+    if v <= md:
+        return "md"
+    return "lg"

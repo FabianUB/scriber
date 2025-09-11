@@ -14,17 +14,17 @@ from .core.nodes import (
     TextNode,
 )
 from .document import current_container, get_current_document
+from .theme.tokens import spacing_value
 
 
 # Containers
 @contextmanager
-def row(gap: Optional[int] = None, justify: str = "start", equal: bool = False, grow: Optional[int] = None, **props):
+def row(gap: Optional[object] = None, justify: str = "start", equal: bool = False, grow: Optional[int] = None, **props):
     doc = get_current_document()
-    if gap is None:
-        gap = doc.theme.spacing["md"]
+    gap_pts = spacing_value(doc.theme, gap, default_key="md")
     if grow is not None:
         props["grow"] = grow
-    node = RowNode(gap=gap, justify=justify, equal=equal, **props)
+    node = RowNode(gap=gap_pts, justify=justify, equal=equal, **props)
     current_container().add(node)
     # push
     from .document import _push, _pop  # local import to avoid cycle in type-checkers
@@ -37,13 +37,12 @@ def row(gap: Optional[int] = None, justify: str = "start", equal: bool = False, 
 
 
 @contextmanager
-def column(gap: Optional[int] = None, grow: Optional[int] = None, **props):
+def column(gap: Optional[object] = None, grow: Optional[int] = None, **props):
     doc = get_current_document()
-    if gap is None:
-        gap = doc.theme.spacing["md"]
+    gap_pts = spacing_value(doc.theme, gap, default_key="md")
     if grow is not None:
         props["grow"] = grow
-    node = ColumnNode(gap=gap, **props)
+    node = ColumnNode(gap=gap_pts, **props)
     current_container().add(node)
     from .document import _push, _pop
 
@@ -55,15 +54,14 @@ def column(gap: Optional[int] = None, grow: Optional[int] = None, **props):
 
 
 @contextmanager
-def card(padding: Optional[int] = None, grow: Optional[int] = None, radius: Optional[object] = None, **props):
+def card(padding: Optional[object] = None, grow: Optional[int] = None, radius: Optional[object] = None, **props):
     doc = get_current_document()
-    if padding is None:
-        padding = doc.theme.spacing["lg"]
+    pad_pts = spacing_value(doc.theme, padding, default_key="lg")
     if grow is not None:
         props["grow"] = grow
     if radius is not None:
         props["radius"] = radius
-    node = CardNode(padding=padding, **props)
+    node = CardNode(padding=pad_pts, **props)
     current_container().add(node)
     from .document import _push, _pop
 
@@ -104,8 +102,11 @@ def separator(**props):
     current_container().add(SeparatorNode(**props))
 
 
-def spacer(size: Optional[str] = None, **props):
-    current_container().add(SpacerNode(size=size, **props))
+def spacer(size: Optional[object] = None, **props):
+    # Store numeric points directly to simplify renderer logic
+    doc = get_current_document()
+    h = spacing_value(doc.theme, size, default_key="md")
+    current_container().add(SpacerNode(size=h, **props))
 
 
 def figure(obj, width: Optional[float] = None, height: Optional[float] = None, dpi: int = 144, align: str = "start", caption: Optional[str] = None, **props):

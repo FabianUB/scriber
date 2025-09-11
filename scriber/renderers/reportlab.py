@@ -30,6 +30,7 @@ from ..core.nodes import (
     PageNode,
 )
 from ..document import Document
+from ..theme.tokens import size_token
 from reportlab.lib.utils import ImageReader
 import io
 import os
@@ -152,8 +153,9 @@ def _badge_flowable(doc: Document, node: BadgeNode, styles) -> Table:
     theme = doc.theme
     text = node.props.get("text", "")
     variant = node.props.get("variant", "default")
-    size = node.props.get("size", "md")
-    ctrl = theme.control["sizes"].get(size, theme.control["sizes"]["md"])
+    size_in = node.props.get("size", "md")
+    tok = size_token(theme, size_in)
+    ctrl = theme.control["sizes"].get(tok, theme.control["sizes"]["md"])
 
     # shadcn-inspired variants
     if variant in ("primary", "solid"):
@@ -189,8 +191,9 @@ def _button_flowable(doc: Document, node: ButtonNode, styles) -> Table:
     theme = doc.theme
     text = node.props.get("text", "")
     variant = node.props.get("variant", "primary")
-    size = node.props.get("size", "md")
-    ctrl = theme.control["sizes"].get(size, theme.control["sizes"]["md"])
+    size_in = node.props.get("size", "md")
+    tok = size_token(theme, size_in)
+    ctrl = theme.control["sizes"].get(tok, theme.control["sizes"]["md"])
 
     # Variants
     if variant == "outline":
@@ -442,8 +445,12 @@ def _separator_flowable(doc: Document, node: SeparatorNode, styles) -> Flowable:
 
 
 def _spacer_flowable(doc: Document, node: SpacerNode, styles) -> Flowable:
-    size_key = node.props.get("size") or "md"
-    h = doc.theme.spacing.get(size_key, doc.theme.spacing["md"])
+    size_val = node.props.get("size")
+    if isinstance(size_val, (int, float)):
+        h = float(size_val)
+    else:
+        key = size_val or "md"
+        h = float(doc.theme.spacing.get(key, doc.theme.spacing["md"]))
     return Spacer(1, h)
 
 

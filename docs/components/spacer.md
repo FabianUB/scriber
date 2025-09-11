@@ -3,7 +3,8 @@
 Adds vertical space between elements.
 
 API
-- `ui.spacer(size: Optional[str] = None)` where size is a theme key (e.g., `sm`, `md`, `lg`).
+- `ui.spacer(size: Optional[Union[str, number]] = None)`
+  - Accepts theme keys (`xs`, `sm`, `md`, `lg`, `xl`, `2xl`) or numeric points.
 
 Example
 ```
@@ -14,4 +15,4 @@ ui.spacer("lg")
 
 Notes
 - Defaults to theme `md` if omitted.
-
+- Numeric values are treated as points; e.g., `ui.spacer(0.5)` is a very small gap.
