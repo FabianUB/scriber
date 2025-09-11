@@ -35,6 +35,12 @@ This will generate `examples/output_invoice.pdf`.
 - Run a script: `uv run python <path>`
 - (Optional) Create a virtualenv: `uv venv` (uv can manage one automatically)
 
+### Commit Etiquette
+
+- Commit after each meaningful change with a descriptive message that explains the error fixed or feature added.
+- Prefer small, focused commits; reference any error messages in the body when fixing bugs.
+- Keep AGENTS.md updated with notable changes that affect usage or contributor workflow.
+
 ## Project Structure
 
 ```
@@ -71,3 +77,7 @@ git commit -m "chore: scaffold scriber with uv and MVP"
 
 Standard development flow applies (feature branches, PRs, etc.).
 
+## Changelog (notable dev-facing changes)
+
+- fix(document): use `default_factory` for `Theme` to avoid dataclass mutable default error (`ValueError: mutable default Theme ... use default_factory`).
+- fix(renderer): remove `ListFlowable` (prevent numbered items) and rework Card/Row layouts to avoid unsplittable `KeepTogether` cells causing `LayoutError` (oversized table cells). Cards now render as a one-column table with child-per-row; Rows stack multi-flowable children via an inner one-column table. Horizontal gaps are separate spacer columns.
