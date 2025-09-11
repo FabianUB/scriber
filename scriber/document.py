@@ -1,6 +1,6 @@
 from __future__ import annotations
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 from .core.nodes import ColumnNode, ContainerNode, PageNode
@@ -31,7 +31,7 @@ class Document:
     output_path: str
     size: str = "A4"
     margin: int = 32
-    theme: Theme = default_theme()
+    theme: Theme = field(default_factory=default_theme)
 
     def __post_init__(self) -> None:
         self.root = ColumnNode(gap=self.theme.spacing["md"])  # default vertical flow
@@ -72,4 +72,3 @@ def page(**props):
         yield node
     finally:
         _pop()
-
