@@ -55,12 +55,14 @@ def column(gap: Optional[int] = None, grow: Optional[int] = None, **props):
 
 
 @contextmanager
-def card(padding: Optional[int] = None, grow: Optional[int] = None, **props):
+def card(padding: Optional[int] = None, grow: Optional[int] = None, radius: Optional[object] = None, **props):
     doc = get_current_document()
     if padding is None:
         padding = doc.theme.spacing["lg"]
     if grow is not None:
         props["grow"] = grow
+    if radius is not None:
+        props["radius"] = radius
     node = CardNode(padding=padding, **props)
     current_container().add(node)
     from .document import _push, _pop
