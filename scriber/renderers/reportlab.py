@@ -416,6 +416,10 @@ def _figure_flowables(doc: Document, node: FigureNode, styles) -> List[Flowable]
     width = node.props.get("width")
     height = node.props.get("height")
     flows: List[Flowable] = []
+    # Frame bounds (approx) to keep images within a page
+    page_w, page_h = PAGE_SIZES.get(doc.size.upper(), A4)
+    frame_w = page_w - doc.margin * 2
+    frame_h = page_h - doc.margin * 2
 
     if fmt == "svg" and svg2rlg is not None:
         drawing = svg2rlg(io.BytesIO(data))
@@ -429,8 +433,13 @@ def _figure_flowables(doc: Document, node: FigureNode, styles) -> List[Flowable]
                 s = height / dh
             else:
                 s = 1
-            drawing.width, drawing.height = dw * s, dh * s
-            drawing.scale(s, s)
+        else:
+            # Fit to frame by default
+            s = 1
+            if dw and dh:
+                s = min(frame_w / dw, frame_h / dh, 1)
+        drawing.width, drawing.height = (dw * s if dw else 0), (dh * s if dh else 0)
+        drawing.scale(s, s)
         align = node.props.get("align", "start")
         t = Table([[drawing]])
         t.setStyle(TableStyle([
@@ -454,6 +463,10 @@ def _figure_flowables(doc: Document, node: FigureNode, styles) -> List[Flowable]
             target_w, target_h = (px_w / 2) * scale, height
         else:
             target_w, target_h = px_w / 2, px_h / 2
+        # Fit to frame if oversized
+        if target_w > frame_w or target_h > frame_h:
+            s = min(frame_w / target_w, frame_h / target_h)
+            target_w, target_h = target_w * s, target_h * s
         img = Image(io.BytesIO(data), width=target_w, height=target_h)
         align = node.props.get("align", "start")
         img.hAlign = {"start": "LEFT", "center": "CENTER", "end": "RIGHT"}.get(align, "LEFT")
@@ -464,7 +477,8 @@ def _figure_flowables(doc: Document, node: FigureNode, styles) -> List[Flowable]
         cap = Paragraph(caption, styles["Muted"])
         flows.append(Spacer(1, theme.spacing["xs"]))
         flows.append(cap)
-    return [KeepTogether(flows)]
+    # Return flows directly (no KeepTogether) to allow page breaks when inside tables/cards
+    return flows
 
 
 def _with_color(style: ParagraphStyle, color):
