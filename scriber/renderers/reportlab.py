@@ -32,6 +32,7 @@ from ..core.nodes import (
 from ..document import Document
 from reportlab.lib.utils import ImageReader
 import io
+import os
 try:
     from svglib.svglib import svg2rlg  # type: ignore
 except Exception:  # optional dependency
@@ -109,6 +110,10 @@ class HR(Flowable):
 
 
 def render(doc: Document, output_path: str) -> None:
+    # Ensure output directory exists
+    out_dir = os.path.dirname(output_path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
     page_size = PAGE_SIZES.get(doc.size.upper(), A4)
     pdf = SimpleDocTemplate(
         output_path,
