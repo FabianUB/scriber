@@ -42,6 +42,10 @@ This will generate `examples/output_invoice.pdf`.
 - Keep docs updated with each change; include examples that run against the current code.
 - Consider adding a docs site generator (e.g., MkDocs) later; for now, Markdown is the source of truth.
 
+## Roadmap / TODOs
+
+- See `TODO.md` for a prioritized roadmap. Top priority is chart embedding across Matplotlib/Seaborn/Plotnine/Plotly/Altair with a unified `ui.figure(...)` API and ReportLab image/SVG embedding.
+
 ### Commit Etiquette
 
 - Commit after each meaningful change with a descriptive message that explains the error fixed or feature added.
