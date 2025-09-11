@@ -77,8 +77,8 @@ class PageNode(ContainerNode):
 
 @dataclass
 class RowNode(ContainerNode):
-    def __init__(self, gap: Optional[int] = None, justify: str = "start", **props: Any) -> None:
-        super().__init__("row", {"gap": gap, "justify": justify, **props})
+    def __init__(self, gap: Optional[int] = None, justify: str = "start", equal: bool = False, **props: Any) -> None:
+        super().__init__("row", {"gap": gap, "justify": justify, "equal": equal, **props})
 
 
 @dataclass

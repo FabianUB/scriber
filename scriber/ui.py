@@ -18,11 +18,11 @@ from .document import current_container, get_current_document
 
 # Containers
 @contextmanager
-def row(gap: Optional[int] = None, justify: str = "start", **props):
+def row(gap: Optional[int] = None, justify: str = "start", equal: bool = False, **props):
     doc = get_current_document()
     if gap is None:
         gap = doc.theme.spacing["md"]
-    node = RowNode(gap=gap, justify=justify, **props)
+    node = RowNode(gap=gap, justify=justify, equal=equal, **props)
     current_container().add(node)
     # push
     from .document import _push, _pop  # local import to avoid cycle in type-checkers
@@ -51,10 +51,12 @@ def column(gap: Optional[int] = None, **props):
 
 
 @contextmanager
-def card(padding: Optional[int] = None, **props):
+def card(padding: Optional[int] = None, grow: Optional[int] = None, **props):
     doc = get_current_document()
     if padding is None:
         padding = doc.theme.spacing["lg"]
+    if grow is not None:
+        props["grow"] = grow
     node = CardNode(padding=padding, **props)
     current_container().add(node)
     from .document import _push, _pop

@@ -273,8 +273,13 @@ def _column_flowables(doc: Document, node: ColumnNode, styles) -> List[Flowable]
 
 def _row_flowables(doc: Document, node: RowNode, styles) -> List[Flowable]:
     gap = node.props.get("gap", doc.theme.spacing["md"])
-    cells: List[Flowable] = []
-    for i, child in enumerate(node.children):
+    equal = node.props.get("equal", False)
+    align = node.props.get("justify", "start")
+
+    # Build per-child flowables and capture growth weights
+    content_items: List[Flowable] = []
+    weights: List[float] = []
+    for child in node.children:
         child_flows = _to_flowables(doc, child, styles)
         if not child_flows:
             cell_flow = Spacer(1, 1)
@@ -294,27 +299,91 @@ def _row_flowables(doc: Document, node: RowNode, styles) -> List[Flowable]:
                 )
             )
             cell_flow = inner
-        cells.append(cell_flow)
-        if i < len(node.children) - 1 and gap:
-            # Insert a gap column using a zero-height spacer with fixed width
-            cells.append(Spacer(gap, 0))
-    data = [cells]
-    t = Table(data)
-    align = node.props.get("justify", "start")
-    align_map = {"start": "LEFT", "center": "CENTER", "end": "RIGHT"}
-    t.setStyle(
-        TableStyle(
-            [
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("ALIGN", (0, 0), (-1, -1), align_map.get(align, "LEFT")),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                ("TOPPADDING", (0, 0), (-1, -1), 0),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-            ]
+        content_items.append(cell_flow)
+        w = 1.0
+        if hasattr(child, "props"):
+            w = float(child.props.get("grow", 1) or 1)
+        weights.append(max(w, 0.0))
+
+    # If not equal distribution, fall back to simple table with auto widths and spacer columns
+    if not equal:
+        cells: List[Flowable] = []
+        for i, flow in enumerate(content_items):
+            cells.append(flow)
+            if i < len(content_items) - 1 and gap:
+                cells.append(Spacer(gap, 0))
+        data = [cells]
+        t = Table(data)
+        align_map = {"start": "LEFT", "center": "CENTER", "end": "RIGHT"}
+        t.setStyle(
+            TableStyle(
+                [
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ALIGN", (0, 0), (-1, -1), align_map.get(align, "LEFT")),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ]
+            )
         )
-    )
-    return [t]
+        return [t]
+
+    # Equal or weighted distribution: use a dynamic table that computes column widths at wrap time
+    class _WeightedRow(Flowable):
+        def __init__(self, items: List[Flowable], weights: List[float], gap: int, align: str):
+            super().__init__()
+            self.items = items
+            self.weights = [w if w > 0 else 0 for w in weights]
+            self.gap = gap
+            self.align = align
+            self._table = None
+
+        def _build_table(self, availWidth):
+            # total gap width
+            n = len(self.items)
+            gaps = (n - 1) * self.gap if n > 1 else 0
+            content_width = max(availWidth - gaps, 0)
+            total_w = sum(self.weights) or n
+            per_cols = [content_width * (w / total_w) for w in self.weights]
+            # Build row cells and colWidths interleaving gaps
+            cells: List[Flowable] = []
+            col_widths: List[float] = []
+            for i, (it, cw) in enumerate(zip(self.items, per_cols)):
+                cells.append(it)
+                col_widths.append(cw)
+                if i < n - 1 and self.gap:
+                    cells.append(Spacer(self.gap, 0))
+                    col_widths.append(self.gap)
+            t = Table([cells], colWidths=col_widths)
+            align_map = {"start": "LEFT", "center": "CENTER", "end": "RIGHT"}
+            t.setStyle(
+                TableStyle(
+                    [
+                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                        ("ALIGN", (0, 0), (-1, -1), align_map.get(self.align, "LEFT")),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                        ("TOPPADDING", (0, 0), (-1, -1), 0),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ]
+                )
+            )
+            self._table = t
+
+        def wrap(self, availWidth, availHeight):
+            self._build_table(availWidth)
+            return self._table.wrap(availWidth, availHeight)
+
+        def split(self, availWidth, availHeight):
+            if not self._table:
+                self._build_table(availWidth)
+            return self._table.split(availWidth, availHeight)
+
+        def draw(self):
+            self._table.drawOn(self.canv, 0, 0)
+
+    return [_WeightedRow(content_items, weights, gap, align)]
 
 
 def _separator_flowable(doc: Document, node: SeparatorNode, styles) -> Flowable:
