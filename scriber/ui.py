@@ -18,10 +18,12 @@ from .document import current_container, get_current_document
 
 # Containers
 @contextmanager
-def row(gap: Optional[int] = None, justify: str = "start", equal: bool = False, **props):
+def row(gap: Optional[int] = None, justify: str = "start", equal: bool = False, grow: Optional[int] = None, **props):
     doc = get_current_document()
     if gap is None:
         gap = doc.theme.spacing["md"]
+    if grow is not None:
+        props["grow"] = grow
     node = RowNode(gap=gap, justify=justify, equal=equal, **props)
     current_container().add(node)
     # push
@@ -35,10 +37,12 @@ def row(gap: Optional[int] = None, justify: str = "start", equal: bool = False, 
 
 
 @contextmanager
-def column(gap: Optional[int] = None, **props):
+def column(gap: Optional[int] = None, grow: Optional[int] = None, **props):
     doc = get_current_document()
     if gap is None:
         gap = doc.theme.spacing["md"]
+    if grow is not None:
+        props["grow"] = grow
     node = ColumnNode(gap=gap, **props)
     current_container().add(node)
     from .document import _push, _pop
