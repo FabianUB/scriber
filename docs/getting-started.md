@@ -14,10 +14,15 @@ uv sync
 ## Quick Example
 
 ```
-uv run python examples/invoice.py
+uv run python examples/invoice_shadcn.py   # shadcn preset
+uv run python examples/invoice_classic.py  # classic preset
+uv run python examples/invoice_default.py  # default preset
 ```
 
-This generates `examples/output_invoice.pdf`.
+Outputs:
+- `examples/output_invoice_shadcn.pdf`
+- `examples/output_invoice_classic.pdf`
+- `examples/output_invoice_default.pdf`
 
 ## Minimal Usage
 
@@ -35,4 +40,3 @@ with pdf.document("out.pdf", size="A4", margin=32):
                 ui.button("Primary")
                 ui.button("Secondary", variant="outline")
 ```
-
