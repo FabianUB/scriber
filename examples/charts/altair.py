@@ -15,7 +15,7 @@ def build_altair():
     ]
     chart = alt.Chart(data).mark_line(point=True).encode(x="x:Q", y="y:Q").properties(width=400, height=250, title="Altair Line Chart")
 
-    with pdf.document("examples/output_charts_altair.pdf", size="A4", margin=36, theme="shadcn"):
+    with pdf.document("examples/charts/output_charts_altair.pdf", size="A4", margin=36, theme="shadcn"):
         with page():
             ui.h2("Charts (Altair)")
             ui.text("Rendered as SVG when svglib is available; otherwise PNG.")

@@ -11,7 +11,7 @@ def build_plotly():
     fig = go.Figure(data=[go.Bar(x=["A", "B", "C"], y=[10, 15, 7])])
     fig.update_layout(title_text="Plotly Bar Chart", width=500, height=300)
 
-    with pdf.document("examples/output_charts_plotly.pdf", size="A4", margin=36, theme="shadcn"):
+    with pdf.document("examples/charts/output_charts_plotly.pdf", size="A4", margin=36, theme="shadcn"):
         with page():
             ui.h2("Charts (Plotly)")
             ui.text("Rendered as SVG when svglib is available; otherwise PNG.")

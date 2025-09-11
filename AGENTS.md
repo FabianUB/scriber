@@ -20,13 +20,15 @@ Shadcn-inspired, Streamlit-like PDF builder for Python. Build reports and invoic
 uv sync
 ```
 
-3) Run the example:
+3) Run examples:
 
 ```
-uv run python examples/invoice.py
+uv run python examples/invoices/invoice_shadcn.py
+uv run python examples/charts/matplotlib.py
+uv run python examples/reports/kpi_report_shadcn.py
 ```
 
-This will generate `examples/output_invoice.pdf`.
+Outputs are written next to each example (e.g., `examples/invoices/output_*.pdf`).
 
 ## Development Workflow
 
@@ -65,11 +67,29 @@ scriber/
     reportlab.py  # ReportLab-based renderer
   theme/tokens.py # shadcn-inspired tokens
 examples/
-  invoice.py
+  invoices/
+    invoice_basic.py
+    invoice_shadcn.py
+    invoice_classic.py
+    invoice_default.py
+  charts/
+    matplotlib.py
+    seaborn.py
+    plotnine.py
+    plotly.py
+    altair.py
+  reports/
+    kpi_report_shadcn.py
 pyproject.toml
 AGENTS.md
 .gitignore
 ```
+
+### Examples Organization
+
+- Invoices under `examples/invoices/` with multiple theme variants.
+- Charts under `examples/charts/` covering Matplotlib, Seaborn, Plotnine, Plotly, and Altair.
+- Reports under `examples/reports/` (e.g., `kpi_report_shadcn.py`).
 
 ## Design Notes
 

@@ -15,7 +15,7 @@ def build_plotnine():
     })
     p = ggplot(df, aes("x", "y")) + geom_line() + geom_point() + theme_minimal()
 
-    with pdf.document("examples/output_charts_plotnine.pdf", size="A4", margin=36, theme="shadcn"):
+    with pdf.document("examples/charts/output_charts_plotnine.pdf", size="A4", margin=36, theme="shadcn"):
         with page():
             ui.h2("Charts (Plotnine)")
             ui.text("Plotnine renders via Matplotlib; exported as PNG.")

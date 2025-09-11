@@ -12,7 +12,7 @@ def build_charts():
     ax.plot([0, 1, 2, 3], [0, 1, 0, 1])
     ax.set_title("Demo Plot")
 
-    with pdf.document("examples/output_charts_matplotlib.pdf", size="A4", margin=36, theme="shadcn"):
+    with pdf.document("examples/charts/output_charts_matplotlib.pdf", size="A4", margin=36, theme="shadcn"):
         with page():
             ui.h2("Charts (Matplotlib)")
             ui.text("Below is a Matplotlib figure embedded as a PNG.")

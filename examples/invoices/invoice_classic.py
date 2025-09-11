@@ -3,9 +3,9 @@ from scriber.document import page
 
 
 def build_invoice():
-    with pdf.document("examples/output_invoice_default.pdf", size="A4", margin=36, theme="default"):
+    with pdf.document("examples/invoices/output_invoice_classic.pdf", size="A4", margin=36, theme="classic"):
         with page():
-            with ui.card():
+            with ui.card(variant="outline"):
                 ui.h2("Invoice #INV-1001")
                 ui.text("Acme Inc.")
                 ui.text("123 Business Rd, Gotham")
@@ -17,7 +17,7 @@ def build_invoice():
             ui.spacer("lg")
 
             with ui.row(gap=12, justify="end"):
-                ui.badge("PAID", variant="primary", size="sm")
+                ui.badge("PAID", variant="outline", size="sm")
 
             ui.spacer("lg")
 
@@ -31,7 +31,7 @@ def build_invoice():
             ui.spacer("lg")
 
             with ui.row(gap=8, justify="end"):
-                ui.button("Download")
+                ui.button("Download", variant="secondary")
                 ui.button("Share", variant="outline")
 
 

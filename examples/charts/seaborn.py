@@ -11,7 +11,7 @@ def build_seaborn():
     except Exception as e:
         raise SystemExit("Seaborn and Matplotlib are required: uv add seaborn matplotlib") from e
 
-    # Synthetic dataset (avoid network for seaborn built-in datasets)
+    # Synthetic dataset
     rng = np.random.default_rng(0)
     x = np.linspace(0, 10, 50)
     y = np.sin(x) + rng.normal(scale=0.2, size=len(x))
@@ -23,7 +23,7 @@ def build_seaborn():
     sns.lineplot(data=df, x="x", y="y", ax=ax)
     ax.set_title("Seaborn Scatter + Line")
 
-    with pdf.document("examples/output_charts_seaborn.pdf", size="A4", margin=36, theme="shadcn"):
+    with pdf.document("examples/charts/output_charts_seaborn.pdf", size="A4", margin=36, theme="shadcn"):
         with page():
             ui.h2("Charts (Seaborn)")
             ui.text("Seaborn plots are Matplotlib figures under the hood.")

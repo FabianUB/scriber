@@ -14,36 +14,36 @@ uv sync
 ## Quick Example
 
 ```
-uv run python examples/invoice_shadcn.py   # shadcn preset
-uv run python examples/invoice_classic.py  # classic preset
-uv run python examples/invoice_default.py  # default preset
+uv run python examples/invoices/invoice_shadcn.py   # shadcn preset
+uv run python examples/invoices/invoice_classic.py  # classic preset
+uv run python examples/invoices/invoice_default.py  # default preset
 ```
 
 Outputs:
-- `examples/output_invoice_shadcn.pdf`
-- `examples/output_invoice_classic.pdf`
-- `examples/output_invoice_default.pdf`
+- `examples/invoices/output_invoice_shadcn.pdf`
+- `examples/invoices/output_invoice_classic.pdf`
+- `examples/invoices/output_invoice_default.pdf`
 
 ## Charts (P0)
 
 Matplotlib example (install first: `uv add matplotlib`):
 
 ```
-uv run python examples/charts_matplotlib.py
+uv run python examples/charts/matplotlib.py
 ```
 
-Output: `examples/output_charts_matplotlib.pdf`
+Output: `examples/charts/output_charts_matplotlib.pdf`
 
 Plotly example (install first: `uv add plotly kaleido`):
 
 ```
-uv run python examples/charts_plotly.py
+uv run python examples/charts/plotly.py
 ```
 
 Altair example (install first: `uv add altair vl-convert-python`):
 
 ```
-uv run python examples/charts_altair.py
+uv run python examples/charts/altair.py
 ```
 
 Tip: Install `svglib` for vector SVG rendering with Plotly/Altair:
@@ -55,18 +55,18 @@ uv add svglib
 Seaborn example (install first: `uv add seaborn matplotlib`):
 
 ```
-uv run python examples/charts_seaborn.py
+uv run python examples/charts/seaborn.py
 ```
 
 Plotnine example (install first: `uv add plotnine`):
 
 ```
-uv run python examples/charts_plotnine.py
+uv run python examples/charts/plotnine.py
 ```
 
 Outputs:
-- `examples/output_charts_seaborn.pdf`
-- `examples/output_charts_plotnine.pdf`
+- `examples/charts/output_charts_seaborn.pdf`
+- `examples/charts/output_charts_plotnine.pdf`
 
 ## Minimal Usage
 
