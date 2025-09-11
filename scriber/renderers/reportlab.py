@@ -10,7 +10,8 @@ from reportlab.platypus import (
     Spacer,
     Table,
     TableStyle,
-    ListFlowable,
+    KeepTogether,
+    KeepInFrame,
     Flowable,
 )
 
@@ -206,20 +207,30 @@ def _card_flowables(doc: Document, node: CardNode, styles) -> List[Flowable]:
     content: List[Flowable] = []
     for child in node.children:
         content.extend(_to_flowables(doc, child, styles))
-    inner = ListFlowable(content)
-    t = Table([[inner]])
-    t.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, -1), theme.colors["card"]),
-                ("BOX", (0, 0), (-1, -1), 0.5, theme.colors["border"]),
-                ("LEFTPADDING", (0, 0), (-1, -1), node.props.get("padding", theme.spacing["lg"])),
-                ("RIGHTPADDING", (0, 0), (-1, -1), node.props.get("padding", theme.spacing["lg"])),
-                ("TOPPADDING", (0, 0), (-1, -1), node.props.get("padding", theme.spacing["lg"])),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), node.props.get("padding", theme.spacing["lg"])),
-            ]
-        )
-    )
+
+    # Build a single-column table where each child is its own row.
+    # This allows natural page-splitting (no giant KeepTogether cell).
+    rows = [[f] for f in content]
+    if not rows:
+        rows = [[Spacer(1, theme.spacing["sm"])]]
+    t = Table(rows)
+
+    pad = node.props.get("padding", theme.spacing["lg"])
+    n = len(rows)
+    style_cmds = [
+        ("BACKGROUND", (0, 0), (-1, -1), theme.colors["card"]),
+        ("BOX", (0, 0), (-1, -1), 0.5, theme.colors["border"]),
+        ("LEFTPADDING", (0, 0), (-1, -1), pad),
+        ("RIGHTPADDING", (0, 0), (-1, -1), pad),
+        # Default zero vertical padding for all rows
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+        # Apply outer top/bottom padding only to first/last rows
+        ("TOPPADDING", (0, 0), (-1, 0), pad),
+        ("BOTTOMPADDING", (0, n - 1), (-1, n - 1), pad),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+    ]
+    t.setStyle(TableStyle(style_cmds))
     return [t]
 
 
@@ -235,12 +246,31 @@ def _column_flowables(doc: Document, node: ColumnNode, styles) -> List[Flowable]
 
 def _row_flowables(doc: Document, node: RowNode, styles) -> List[Flowable]:
     gap = node.props.get("gap", doc.theme.spacing["md"])
-    cells: List[ListFlowable | Flowable] = []
+    cells: List[Flowable] = []
     for i, child in enumerate(node.children):
         child_flows = _to_flowables(doc, child, styles)
-        cells.append(ListFlowable(child_flows))
+        if not child_flows:
+            cell_flow = Spacer(1, 1)
+        elif len(child_flows) == 1:
+            cell_flow = child_flows[0]
+        else:
+            inner = Table([[f] for f in child_flows])
+            inner.setStyle(
+                TableStyle(
+                    [
+                        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                        ("TOPPADDING", (0, 0), (-1, -1), 0),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ]
+                )
+            )
+            cell_flow = inner
+        cells.append(cell_flow)
         if i < len(node.children) - 1 and gap:
-            cells.append(Spacer(gap, 1))
+            # Insert a gap column using a zero-height spacer with fixed width
+            cells.append(Spacer(gap, 0))
     data = [cells]
     t = Table(data)
     align = node.props.get("justify", "start")
@@ -298,4 +328,3 @@ def _to_flowables(doc: Document, node: Node, styles) -> List[Flowable]:
         return _column_flowables(doc, node, styles)
     # Fallback: ignore unknown nodes
     return []
-
