@@ -17,6 +17,8 @@ Notes
 - `align` accepts `start|center|end`. `caption` renders in a muted style under the figure.
 - Optional dependencies are not installed by default. Add them as needed:
   - `uv add matplotlib` for Matplotlib/Seaborn/Plotnine
+  - `uv add seaborn` for Seaborn
+  - `uv add plotnine` for Plotnine
   - `uv add plotly kaleido` for Plotly
   - `uv add altair vl-convert-python` for Altair
   - `uv add svglib` for SVG-to-ReportLab conversion (optional, improves crispness)

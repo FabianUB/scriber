@@ -52,6 +52,22 @@ Tip: Install `svglib` for vector SVG rendering with Plotly/Altair:
 uv add svglib
 ```
 
+Seaborn example (install first: `uv add seaborn matplotlib`):
+
+```
+uv run python examples/charts_seaborn.py
+```
+
+Plotnine example (install first: `uv add plotnine`):
+
+```
+uv run python examples/charts_plotnine.py
+```
+
+Outputs:
+- `examples/output_charts_seaborn.pdf`
+- `examples/output_charts_plotnine.pdf`
+
 ## Minimal Usage
 
 ```
