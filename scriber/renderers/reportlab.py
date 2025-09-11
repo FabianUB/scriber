@@ -451,6 +451,11 @@ def _spacer_flowable(doc: Document, node: SpacerNode, styles) -> Flowable:
     else:
         key = size_val or "md"
         h = float(doc.theme.spacing.get(key, doc.theme.spacing["md"]))
+    # Very small heights can be collapsed by tables/layout; enforce a tiny minimum
+    if h < 0:
+        h = 0.0
+    elif 0 < h < 0.5:
+        h = 0.5
     return Spacer(1, h)
 
 
