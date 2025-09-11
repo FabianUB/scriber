@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling>=1.21.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "scriber"
+version = "0.1.0"
+description = "Shadcn-inspired, Streamlit-like PDF builder for Python"
+authors = [{ name = "Your Name" }]
+requires-python = ">=3.10"
+dependencies = [
+  "reportlab>=3.6",
+]
+readme = "AGENTS.md"
+license = { text = "Proprietary" }
+
+[project.urls]
+Homepage = "https://example.com/" 
+
+[tool.uv]
+# uv will read standard PEP 621 metadata; this section can later host settings.
+
