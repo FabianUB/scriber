@@ -24,6 +24,16 @@ Outputs:
 - `examples/output_invoice_classic.pdf`
 - `examples/output_invoice_default.pdf`
 
+## Charts (P0)
+
+Matplotlib example (install first: `uv add matplotlib`):
+
+```
+uv run python examples/charts_matplotlib.py
+```
+
+Output: `examples/output_charts_matplotlib.pdf`
+
 ## Minimal Usage
 
 ```

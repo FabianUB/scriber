@@ -10,6 +10,7 @@ from .core.nodes import (
     RowNode,
     SeparatorNode,
     SpacerNode,
+    FigureNode,
     TextNode,
 )
 from .document import current_container, get_current_document
@@ -98,3 +99,6 @@ def separator(**props):
 def spacer(size: Optional[str] = None, **props):
     current_container().add(SpacerNode(size=size, **props))
 
+
+def figure(obj, width: Optional[float] = None, height: Optional[float] = None, dpi: int = 144, align: str = "start", caption: Optional[str] = None, **props):
+    current_container().add(FigureNode(obj=obj, width=width, height=height, dpi=dpi, align=align, caption=caption, **props))

@@ -13,6 +13,7 @@ from reportlab.platypus import (
     KeepTogether,
     KeepInFrame,
     Flowable,
+    Image,
 )
 
 from ..core.nodes import (
@@ -24,10 +25,13 @@ from ..core.nodes import (
     RowNode,
     SeparatorNode,
     SpacerNode,
+    FigureNode,
     TextNode,
     PageNode,
 )
 from ..document import Document
+from reportlab.lib.utils import ImageReader
+import io
 
 
 PAGE_SIZES = {
@@ -314,6 +318,119 @@ def _spacer_flowable(doc: Document, node: SpacerNode, styles) -> Flowable:
     return Spacer(1, h)
 
 
+def _figure_to_png_bytes(obj, dpi: int) -> bytes:
+    # Matplotlib / Seaborn / Plotnine path
+    try:
+        import matplotlib
+        import matplotlib.pyplot as plt  # noqa: F401
+        from matplotlib.figure import Figure as MplFigure
+        from matplotlib.axes import Axes as MplAxes
+    except Exception:
+        matplotlib = None
+        MplFigure = None
+        MplAxes = None
+
+    # Plotly path via kaleido
+    try:
+        import plotly.io as pio  # type: ignore
+    except Exception:
+        pio = None
+
+    # Altair via vl-convert-python
+    try:
+        import altair as alt  # type: ignore
+        import vl_convert as vlc  # type: ignore
+    except Exception:
+        alt = None
+        vlc = None
+
+    bio = io.BytesIO()
+
+    # Plotly
+    if pio is not None:
+        try:
+            import plotly.graph_objects as go  # type: ignore
+
+            if isinstance(obj, go.Figure):
+                png = pio.to_image(obj, format="png", scale=max(dpi / 72, 1))
+                return png
+        except Exception:
+            pass
+
+    # Altair
+    if alt is not None and vlc is not None:
+        try:
+            if isinstance(obj, alt.Chart):
+                png = vlc.vegalite_to_png(obj.to_json(), scale=max(dpi / 72, 1))
+                return png
+        except Exception:
+            pass
+
+    # Plotnine -> Matplotlib
+    try:
+        import plotnine as p9  # type: ignore
+
+        if isinstance(obj, p9.ggplot.ggplot):  # type: ignore
+            # Draw to create a matplotlib figure
+            obj.draw()
+            import matplotlib.pyplot as plt
+
+            fig = plt.gcf()
+            fig.savefig(bio, format="png", dpi=dpi, bbox_inches="tight")
+            return bio.getvalue()
+    except Exception:
+        pass
+
+    # Matplotlib Figure/Axes
+    if MplFigure and isinstance(obj, MplFigure):
+        obj.savefig(bio, format="png", dpi=dpi, bbox_inches="tight")
+        return bio.getvalue()
+    if MplAxes and isinstance(obj, MplAxes):
+        fig = obj.figure
+        fig.savefig(bio, format="png", dpi=dpi, bbox_inches="tight")
+        return bio.getvalue()
+
+    raise TypeError(
+        "Unsupported figure type. Pass a Matplotlib Figure/Axes, plotnine ggplot, Plotly Figure (requires kaleido), or Altair Chart (requires vl-convert-python)."
+    )
+
+
+def _figure_flowables(doc: Document, node: FigureNode, styles) -> List[Flowable]:
+    theme = doc.theme
+    obj = node.props.get("obj")
+    dpi = node.props.get("dpi", 144)
+    png = _figure_to_png_bytes(obj, dpi)
+
+    # Determine size
+    reader = ImageReader(io.BytesIO(png))
+    px_w, px_h = reader.getSize()
+    width = node.props.get("width")
+    height = node.props.get("height")
+    if width and height:
+        target_w, target_h = width, height
+    elif width:
+        scale = width / float(px_w / 2)  # default scale halves 144dpi -> 72pt
+        target_w, target_h = width, (px_h / 2) * scale
+    elif height:
+        scale = height / float(px_h / 2)
+        target_w, target_h = (px_w / 2) * scale, height
+    else:
+        # Default: assume created at 144dpi; render at half pixel dims to approx 72pt
+        target_w, target_h = px_w / 2, px_h / 2
+
+    img = Image(io.BytesIO(png), width=target_w, height=target_h)
+    align = node.props.get("align", "start")
+    img.hAlign = {"start": "LEFT", "center": "CENTER", "end": "RIGHT"}.get(align, "LEFT")
+
+    flows: List[Flowable] = [img]
+    caption = node.props.get("caption")
+    if caption:
+        cap = Paragraph(caption, styles["Muted"])
+        flows.append(Spacer(1, theme.spacing["xs"]))
+        flows.append(cap)
+    return [KeepTogether(flows)]
+
+
 def _with_color(style: ParagraphStyle, color):
     s = ParagraphStyle(name=style.name + "+color", parent=style)
     s.textColor = color
@@ -331,6 +448,8 @@ def _to_flowables(doc: Document, node: Node, styles) -> List[Flowable]:
         return [_separator_flowable(doc, node, styles)]
     if isinstance(node, SpacerNode):
         return [_spacer_flowable(doc, node, styles)]
+    if isinstance(node, FigureNode):
+        return _figure_flowables(doc, node, styles)
     if isinstance(node, CardNode):
         return _card_flowables(doc, node, styles)
     if isinstance(node, RowNode):

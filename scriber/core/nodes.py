@@ -44,6 +44,25 @@ class SpacerNode(Node):
         super().__init__("spacer", {"size": size, **props})
 
 
+@dataclass
+class FigureNode(Node):
+    def __init__(
+        self,
+        obj: Any,
+        width: Optional[float] = None,
+        height: Optional[float] = None,
+        dpi: int = 144,
+        align: str = "start",
+        caption: Optional[str] = None,
+        **props: Any,
+    ) -> None:
+        # Store object reference; renderer will resolve/export
+        super().__init__(
+            "figure",
+            {"obj": obj, "width": width, "height": height, "dpi": dpi, "align": align, "caption": caption, **props},
+        )
+
+
 # Containers
 @dataclass
 class ContainerNode(Node):
@@ -72,4 +91,3 @@ class ColumnNode(ContainerNode):
 class CardNode(ContainerNode):
     def __init__(self, padding: Optional[int] = None, **props: Any) -> None:
         super().__init__("card", {"padding": padding, **props})
-
