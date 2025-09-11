@@ -81,13 +81,7 @@ def _styles(doc: Document):
             leading=theme.typography["h3"] + 2,
         )
     )
-    styles.add(
-        ParagraphStyle(
-            name="Button",
-            parent=styles["Body"],
-            alignment=1,  # center
-        )
-    )
+    styles.add(ParagraphStyle(name="Button", parent=styles["Body"], alignment=1))
     return styles
 
 
@@ -145,14 +139,20 @@ def _badge_flowable(doc: Document, node: BadgeNode, styles) -> Table:
     theme = doc.theme
     text = node.props.get("text", "")
     variant = node.props.get("variant", "default")
-    bg = {
-        "default": theme.colors["surface"],
-        "success": theme.colors["success"],
-        "warning": theme.colors["warning"],
-        "danger": theme.colors["danger"],
-        "primary": theme.colors["primary"],
-    }.get(variant, theme.colors["surface"])
-    fg = colors.white if variant in {"primary", "success", "warning", "danger"} else theme.colors["foreground"]
+    size = node.props.get("size", "md")
+    ctrl = theme.control["sizes"].get(size, theme.control["sizes"]["md"])
+
+    # shadcn-inspired variants
+    if variant in ("primary", "solid"):
+        bg, fg, border = theme.colors["primary"], colors.white, theme.colors["primary"]
+    elif variant == "success":
+        bg, fg, border = theme.colors["success"], colors.white, theme.colors["success"]
+    elif variant in ("outline", "secondary"):
+        bg, fg, border = theme.colors["card"], theme.colors["foreground"], theme.colors["border"]
+    elif variant == "danger":
+        bg, fg, border = theme.colors["danger"], colors.white, theme.colors["danger"]
+    else:  # default
+        bg, fg, border = theme.colors["surface"], theme.colors["foreground"], theme.colors["surface"]
 
     cell = Paragraph(text, _with_color(styles["Body"], fg))
     t = Table([[cell]])
@@ -160,12 +160,12 @@ def _badge_flowable(doc: Document, node: BadgeNode, styles) -> Table:
         TableStyle(
             [
                 ("BACKGROUND", (0, 0), (-1, -1), bg),
-                ("LEFTPADDING", (0, 0), (-1, -1), theme.spacing["sm"]),
-                ("RIGHTPADDING", (0, 0), (-1, -1), theme.spacing["sm"]),
-                ("TOPPADDING", (0, 0), (-1, -1), theme.spacing["xs"]),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), theme.spacing["xs"]),
+                ("LEFTPADDING", (0, 0), (-1, -1), ctrl["px"]),
+                ("RIGHTPADDING", (0, 0), (-1, -1), ctrl["px"]),
+                ("TOPPADDING", (0, 0), (-1, -1), ctrl["py"]),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), ctrl["py"]),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("BOX", (0, 0), (-1, -1), 0.5, bg),
+                ("BOX", (0, 0), (-1, -1), 0.5, border),
             ]
         )
     )
@@ -176,25 +176,36 @@ def _button_flowable(doc: Document, node: ButtonNode, styles) -> Table:
     theme = doc.theme
     text = node.props.get("text", "")
     variant = node.props.get("variant", "primary")
+    size = node.props.get("size", "md")
+    ctrl = theme.control["sizes"].get(size, theme.control["sizes"]["md"])
+
+    # Variants
     if variant == "outline":
-        bg = theme.colors["card"]
-        border = theme.colors["border"]
-        fg = theme.colors["foreground"]
-    else:
-        bg = theme.colors["primary"]
-        border = bg
-        fg = colors.white
-    cell = Paragraph(text, _with_color(styles["Button"], fg))
+        bg, border, fg = theme.colors["card"], theme.colors["border"], theme.colors["foreground"]
+    elif variant == "ghost":
+        bg, border, fg = theme.colors["card"], theme.colors["card"], theme.colors["primary"]
+    elif variant == "secondary":
+        bg, border, fg = theme.colors["surface"], theme.colors["surface"], theme.colors["foreground"]
+    elif variant == "danger":
+        bg, border, fg = theme.colors["danger"], theme.colors["danger"], colors.white
+    else:  # primary/default
+        bg, border, fg = theme.colors["primary"], theme.colors["primary"], colors.white
+
+    cell_style = _with_color(styles["Button"], fg)
+    # Adjust font size for control size
+    cell_style.fontSize = theme.typography[ctrl["font"]]
+    cell_style.leading = cell_style.fontSize + 2
+    cell = Paragraph(text, cell_style)
     t = Table([[cell]])
     t.setStyle(
         TableStyle(
             [
                 ("BACKGROUND", (0, 0), (-1, -1), bg),
                 ("GRID", (0, 0), (-1, -1), 0.8, border),
-                ("LEFTPADDING", (0, 0), (-1, -1), theme.spacing["md"]),
-                ("RIGHTPADDING", (0, 0), (-1, -1), theme.spacing["md"]),
-                ("TOPPADDING", (0, 0), (-1, -1), theme.spacing["xs"]),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), theme.spacing["xs"]),
+                ("LEFTPADDING", (0, 0), (-1, -1), ctrl["px"]),
+                ("RIGHTPADDING", (0, 0), (-1, -1), ctrl["px"]),
+                ("TOPPADDING", (0, 0), (-1, -1), ctrl["py"]),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), ctrl["py"]),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ]
         )
@@ -216,10 +227,13 @@ def _card_flowables(doc: Document, node: CardNode, styles) -> List[Flowable]:
     t = Table(rows)
 
     pad = node.props.get("padding", theme.spacing["lg"])
+    variant = node.props.get("variant", "default")
+    bg = theme.colors["card"] if variant in ("default", "outline") else theme.colors["surface"]
+    border_color = theme.colors["border"] if variant in ("default", "outline") else theme.colors["surface"]
     n = len(rows)
     style_cmds = [
-        ("BACKGROUND", (0, 0), (-1, -1), theme.colors["card"]),
-        ("BOX", (0, 0), (-1, -1), 0.5, theme.colors["border"]),
+        ("BACKGROUND", (0, 0), (-1, -1), bg),
+        ("BOX", (0, 0), (-1, -1), 0.5, border_color),
         ("LEFTPADDING", (0, 0), (-1, -1), pad),
         ("RIGHTPADDING", (0, 0), (-1, -1), pad),
         # Default zero vertical padding for all rows

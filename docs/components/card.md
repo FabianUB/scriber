@@ -4,6 +4,7 @@ Surface with background, border, and padding around children.
 
 Props
 - `padding: int` — inner padding in points (default: theme `lg`).
+- `variant: default|outline|subtle` (default: `default`)
 
 Example
 ```
@@ -18,4 +19,4 @@ with ui.card(padding=16):
 
 Notes
 - Cards split naturally across pages; padding applies to outer edges.
-
+- `default` is a white card with border; `outline` border-only; `subtle` uses the surface color.
