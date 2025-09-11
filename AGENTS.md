@@ -35,6 +35,13 @@ This will generate `examples/output_invoice.pdf`.
 - Run a script: `uv run python <path>`
 - (Optional) Create a virtualenv: `uv venv` (uv can manage one automatically)
 
+## Documentation
+
+- Docs live in `docs/` as Markdown.
+- Component docs under `docs/components/` mirror the implemented API and props.
+- Keep docs updated with each change; include examples that run against the current code.
+- Consider adding a docs site generator (e.g., MkDocs) later; for now, Markdown is the source of truth.
+
 ### Commit Etiquette
 
 - Commit after each meaningful change with a descriptive message that explains the error fixed or feature added.
@@ -81,3 +88,6 @@ Standard development flow applies (feature branches, PRs, etc.).
 
 - fix(document): use `default_factory` for `Theme` to avoid dataclass mutable default error (`ValueError: mutable default Theme ... use default_factory`).
 - fix(renderer): remove `ListFlowable` (prevent numbered items) and rework Card/Row layouts to avoid unsplittable `KeepTogether` cells causing `LayoutError` (oversized table cells). Cards now render as a one-column table with child-per-row; Rows stack multi-flowable children via an inner one-column table. Horizontal gaps are separate spacer columns.
+
+### Documentation Added
+- Initial docs structure in `docs/` with component pages and getting started guide.
