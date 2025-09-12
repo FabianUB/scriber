@@ -37,6 +37,7 @@ from reportlab.lib.utils import ImageReader
 import io
 import os
 import numbers
+import datetime as _dt
 try:
     from svglib.svglib import svg2rlg  # type: ignore
 except Exception:  # optional dependency
@@ -120,6 +121,18 @@ def _apply_separators(s: str, settings: Settings) -> str:
     s = s.replace(",", "<T>").replace(".", "<D>")
     s = s.replace("<T>", thou).replace("<D>", dec)
     return s
+
+
+def _format_number(num: float, settings: Settings, decimals: int | None = None) -> str:
+    d = settings.number_decimals if decimals is None else int(decimals)
+    base = f"{num:,.{d}f}"
+    return _apply_separators(base, settings)
+
+
+def _format_percent(num: float, settings: Settings, decimals: int | None = None) -> str:
+    d = settings.percent_decimals if decimals is None else int(decimals)
+    base = f"{num*100:,.{d}f}%"
+    return _apply_separators(base, settings)
 
 
 class HR(Flowable):
@@ -421,19 +434,58 @@ def _table_flowables(doc: Document, node: TableNode, styles) -> List[Flowable]:
     def fmt_cell(ci: int, v):
         if v is None:
             return ""
+        # Date/time formatting
+        if isinstance(v, (_dt.datetime, _dt.date)):
+            try:
+                if isinstance(v, _dt.datetime):
+                    return v.strftime(doc.settings.datetime_format)
+                return v.strftime(doc.settings.date_format)
+            except Exception:
+                return str(v)
         fmt = None
+        fmt_decimals = None
         # Resolve formats by column name or index
         if isinstance(formats, dict):
             if cols and ci < len(cols) and cols[ci] in formats:
                 fmt = formats[cols[ci]]
             elif ci in formats:
                 fmt = formats[ci]
+        # If format is a dict/tuple, extract type and decimals
+        if isinstance(fmt, dict):
+            fmt_decimals = fmt.get("decimals")
+            fmt = fmt.get("type")
+        elif isinstance(fmt, (list, tuple)) and fmt:
+            fmt, *rest = fmt
+            if rest:
+                fmt_decimals = rest[0]
+
         if fmt == "currency" and numeric_cols[ci]:
             try:
                 num = float(str(v).replace(",", ""))
-                s = f"{num:,.{doc.settings.number_decimals}f}"
-                s = _apply_separators(s, doc.settings)
+                s = _format_number(num, doc.settings, fmt_decimals)
                 return f"{currency_symbol}{s}"
+            except Exception:
+                return str(v)
+        if fmt == "percent" and numeric_cols[ci]:
+            try:
+                num = float(str(v).replace(",", ""))
+                return _format_percent(num, doc.settings, fmt_decimals)
+            except Exception:
+                return str(v)
+        if fmt == "int" and numeric_cols[ci]:
+            try:
+                num = float(str(v).replace(",", ""))
+                s = _format_number(num, doc.settings, 0)
+                # drop decimal part entirely
+                if doc.settings.decimal_separator in s:
+                    s = s.split(doc.settings.decimal_separator)[0]
+                return s
+            except Exception:
+                return str(v)
+        if fmt == "thousands" and numeric_cols[ci]:
+            try:
+                num = float(str(v).replace(",", ""))
+                return _format_number(num, doc.settings, 0)
             except Exception:
                 return str(v)
         if isinstance(fmt, str) and fmt not in ("currency",):
@@ -450,8 +502,7 @@ def _table_flowables(doc: Document, node: TableNode, styles) -> List[Flowable]:
         if numeric_cols[ci]:
             try:
                 num = float(str(v).replace(",", ""))
-                s = f"{num:,.{doc.settings.number_decimals}f}"
-                return _apply_separators(s, doc.settings)
+                return _format_number(num, doc.settings)
             except Exception:
                 return str(v)
         return str(v)

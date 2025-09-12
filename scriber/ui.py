@@ -110,6 +110,45 @@ def spacer(size: Optional[object] = None, **props):
     current_container().add(SpacerNode(size=h, **props))
 
 
+def number(value, kind: str = "decimal", decimals: Optional[int] = None, prefix: Optional[str] = None, suffix: Optional[str] = None, **props):
+    """Render a formatted number using document settings.
+
+    kind: 'decimal' | 'currency' | 'percent' | 'int' | 'thousands'
+    decimals: override decimals for decimal/currency/percent
+    prefix/suffix: extra strings to add around the formatted value
+    """
+    doc = get_current_document()
+    from .core.nodes import TextNode
+    from .renderers.reportlab import _format_number, _format_percent, _apply_separators  # type: ignore
+
+    s = str(value)
+    try:
+        num = float(str(value).replace(",", ""))
+        if kind == "currency":
+            s = _format_number(num, doc.settings, decimals)
+            s = f"{doc.settings.currency_symbol}{s}"
+        elif kind == "percent":
+            s = _format_percent(num, doc.settings, decimals)
+        elif kind == "int":
+            s = _format_number(num, doc.settings, 0)
+            # remove decimals entirely
+            if doc.settings.decimal_separator in s:
+                s = s.split(doc.settings.decimal_separator)[0]
+        elif kind == "thousands":
+            s = _format_number(num, doc.settings, 0)
+        else:
+            s = _format_number(num, doc.settings, decimals)
+    except Exception:
+        # leave as string
+        pass
+
+    if prefix:
+        s = f"{prefix}{s}"
+    if suffix:
+        s = f"{s}{suffix}"
+    current_container().add(TextNode(s, **props))
+
+
 def table(data, columns: Optional[list] = None, align: Optional[object] = None, col_widths: Optional[list] = None, zebra: bool = False, header: bool = True, compact: bool = False, **props):
     current_container().add(
         TableNode(

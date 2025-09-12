@@ -6,5 +6,6 @@ Components are grouped into containers and primitives.
 - Primitives: `Text`, `Headings (h1/h2/h3)`, `Badge`, `Button`, `Separator`, `Spacer`
 - Media: `Figure` (charts from Matplotlib/Seaborn/Plotnine/Plotly/Altair)
 - Data: `Table` (pandas, polars, lists)
+ - Helpers: `Number` (locale-aware numeric text)
 
 Each component page documents usage, key props, and examples aligned with the current MVP.
