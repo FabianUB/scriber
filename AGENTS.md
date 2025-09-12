@@ -112,6 +112,7 @@ Standard development flow applies (feature branches, PRs, etc.).
 
 - fix(document): use `default_factory` for `Theme` to avoid dataclass mutable default error (`ValueError: mutable default Theme ... use default_factory`).
 - fix(renderer): remove `ListFlowable` (prevent numbered items) and rework Card/Row layouts to avoid unsplittable `KeepTogether` cells causing `LayoutError` (oversized table cells). Cards now render as a one-column table with child-per-row; Rows stack multi-flowable children via an inner one-column table. Horizontal gaps are separate spacer columns.
+ - fix(table): wire `TableNode` into renderer dispatch so `ui.table(...)` appears in PDFs.
 
 ### Documentation Added
 - Initial docs structure in `docs/` with component pages and getting started guide.
