@@ -230,8 +230,10 @@ def render(doc: Document, output_path: str) -> None:
             self._saved_page_states = []
 
         def showPage(self):
+            # Save current page state, but do not finalize the page yet
             self._saved_page_states.append(dict(self.__dict__))
-            canvas.Canvas.showPage(self)
+            # Start a new page without emitting the current one
+            canvas.Canvas._startPage(self)
 
         def save(self):
             """Add page info to each page (page x of y)."""
