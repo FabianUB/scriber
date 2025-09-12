@@ -235,6 +235,8 @@ def render(doc: Document, output_path: str) -> None:
 
         def save(self):
             """Add page info to each page (page x of y)."""
+            # Include last page state
+            self._saved_page_states.append(dict(self.__dict__))
             total = len(self._saved_page_states)
             for state in self._saved_page_states:
                 self.__dict__.update(state)
@@ -250,14 +252,16 @@ def render(doc: Document, output_path: str) -> None:
             if fmt == "x":
                 label = f"{page_num}"
             else:  # default 'xofy'
-                label = f"{page_num} / {total}"
+                label = f"{page_num} of {total}"
             self.saveState()
             self.setFont(doc.theme.typography["font"], 9)
             self.setFillColor(doc.theme.colors["muted"])
-            y = pdf.bottomMargin - 16 if hasattr(pdf, 'bottomMargin') else 24
-            # right-align within page width minus right margin
-            page_w, _ = pdf.pagesize
-            x = page_w - pdf.rightMargin
+            # Use canvas page size and a default margin if template not available here
+            page_w, page_h = getattr(self, "_pagesize", (595.27, 841.89))
+            right_margin = getattr(pdf, 'rightMargin', 36)
+            bottom_margin = getattr(pdf, 'bottomMargin', 36)
+            y = bottom_margin - 16
+            x = page_w - right_margin
             self.drawRightString(x, y, label)
             self.restoreState()
 
