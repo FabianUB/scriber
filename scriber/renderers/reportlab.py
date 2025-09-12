@@ -865,10 +865,18 @@ def _labeled_separator_flowables(doc: Document, node: LabeledSeparatorNode, styl
             self._aw = 0
 
         def wrap(self, availWidth, availHeight):
+            from reportlab.pdfbase.pdfmetrics import stringWidth
             self._aw = availWidth
-            # Wrap label to max allowed width (accounting for gaps)
+            # Compute an intrinsic single-line width approximation for the label
             max_label_w = max(availWidth - 2 * self.gap, 0)
-            lw, lh = self.label.wrap(max_label_w, 1e6)
+            try:
+                fn = getattr(self.label, 'style', None).fontName if hasattr(self.label, 'style') else None
+                fs = getattr(self.label, 'style', None).fontSize if hasattr(self.label, 'style') else None
+                intrinsic = stringWidth(self.label.text, fn or "Helvetica", fs or 10)
+            except Exception:
+                intrinsic = max_label_w
+            lw_constraint = min(max_label_w, intrinsic)
+            lw, lh = self.label.wrap(lw_constraint, 1e6)
             self._lw, self._lh = lw, lh
             content_h = max(self.stroke, lh)
             return availWidth, self.m_top + content_h + self.m_bottom
