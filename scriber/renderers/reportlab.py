@@ -796,6 +796,8 @@ def _to_flowables(doc: Document, node: Node, styles) -> List[Flowable]:
         return [_spacer_flowable(doc, node, styles)]
     if isinstance(node, FigureNode):
         return _figure_flowables(doc, node, styles)
+    if isinstance(node, TableNode):
+        return _table_flowables(doc, node, styles)
     if isinstance(node, CardNode):
         return _card_flowables(doc, node, styles)
     if isinstance(node, RowNode):
