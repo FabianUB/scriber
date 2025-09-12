@@ -11,6 +11,7 @@ from .core.nodes import (
     SeparatorNode,
     SpacerNode,
     FigureNode,
+    TableNode,
     TextNode,
 )
 from .document import current_container, get_current_document
@@ -107,6 +108,21 @@ def spacer(size: Optional[object] = None, **props):
     doc = get_current_document()
     h = spacing_value(doc.theme, size, default_key="md")
     current_container().add(SpacerNode(size=h, **props))
+
+
+def table(data, columns: Optional[list] = None, align: Optional[object] = None, col_widths: Optional[list] = None, zebra: bool = False, header: bool = True, compact: bool = False, **props):
+    current_container().add(
+        TableNode(
+            data=data,
+            columns=columns,
+            align=align,
+            col_widths=col_widths,
+            zebra=zebra,
+            header=header,
+            compact=compact,
+            **props,
+        )
+    )
 
 
 def figure(obj, width: Optional[float] = None, height: Optional[float] = None, dpi: int = 144, align: str = "start", caption: Optional[str] = None, **props):

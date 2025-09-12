@@ -63,6 +63,35 @@ class FigureNode(Node):
         )
 
 
+@dataclass
+class TableNode(Node):
+    def __init__(
+        self,
+        data: Any,
+        columns: Optional[list] = None,
+        align: Optional[Any] = None,
+        col_widths: Optional[list] = None,
+        zebra: bool = False,
+        header: bool = True,
+        compact: bool = False,
+        **props: Any,
+    ) -> None:
+        # Store the raw data source; renderer will normalize (supports pandas/polars/lists)
+        super().__init__(
+            "table",
+            {
+                "source": data,
+                "columns": columns,
+                "align": align,
+                "col_widths": col_widths,
+                "zebra": zebra,
+                "header": header,
+                "compact": compact,
+                **props,
+            },
+        )
+
+
 # Containers
 @dataclass
 class ContainerNode(Node):

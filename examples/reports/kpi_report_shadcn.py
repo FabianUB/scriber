@@ -3,9 +3,11 @@ from scriber.document import page
 
 
 def kpi_card(label: str, value: str, delta: str = None, variant: str = "default"):
-    with ui.card():
+    with ui.card(radius=8):
         ui.text(label, muted=True)
+        ui.spacer("s")
         ui.h2(value)
+        ui.spacer(1.5)
         if delta:
             ui.badge(delta, variant=variant, size="sm")
 
@@ -25,7 +27,7 @@ def build_report():
             ui.spacer("lg")
 
             # KPIs grid
-            with ui.row(gap=16):
+            with ui.row(equal=True, gap=10):
                 kpi_card("Revenue", "$1.24M", "+8.2%", variant="success")
                 kpi_card("Churn", "2.4%", "-0.3%", variant="success")
                 kpi_card("Active Users", "84,120", "+3.1%", variant="success")
