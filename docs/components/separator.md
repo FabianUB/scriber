@@ -15,4 +15,8 @@ ui.separator(color="#2563eb")              # custom hex color
 ui.separator(color="primary")              # theme color token
 ui.separator(style="dashed", margin=4)     # dashed rule with vertical margins
 ui.separator(style="dotted", thickness=1)  # dotted rule
+
+# Labeled separators (see dedicated doc page)
+ui.labeled_separator("Section Title")
+ui.labeled_separator("Details", style="dotted", thickness=1)
 ```
