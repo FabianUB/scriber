@@ -137,23 +137,35 @@ def _format_percent(num: float, settings: Settings, decimals: int | None = None)
 
 
 class HR(Flowable):
-    def __init__(self, width=1, color=colors.HexColor("#e5e7eb")):
+    def __init__(self, width=1, color=colors.HexColor("#e5e7eb"), style: str = "solid", m_top: float = 0.0, m_bottom: float = 0.0):
         super().__init__()
         self.stroke_width = width  # thickness in points
         self.color = color
         self._avail_width = 0
+        self.style = style
+        self.m_top = max(m_top, 0.0)
+        self.m_bottom = max(m_bottom, 0.0)
 
     def wrap(self, availWidth, availHeight):
         self._avail_width = availWidth
         # Ensure the flowable reserves at least the stroke thickness in height
-        h = max(self.stroke_width, 0.5)
+        h = self.m_top + max(self.stroke_width, 0.5) + self.m_bottom
         return availWidth, h
 
     def draw(self):
         self.canv.setStrokeColor(self.color)
         self.canv.setLineWidth(self.stroke_width)
-        # Draw a horizontal line across the available width
-        self.canv.line(0, self.stroke_width / 2.0, self._avail_width, self.stroke_width / 2.0)
+        # Dash styles
+        s = (self.style or "solid").lower()
+        if s == "dashed":
+            self.canv.setDash(6, 3)
+        elif s == "dotted":
+            self.canv.setDash(1, 2)
+        else:
+            self.canv.setDash()  # solid
+        # Draw a horizontal line across the available width accounting for margins
+        y = self.m_bottom + self.stroke_width / 2.0
+        self.canv.line(0, y, self._avail_width, y)
 
 
 def render(doc: Document, output_path: str) -> None:
@@ -798,7 +810,10 @@ def _separator_flowable(doc: Document, node: SeparatorNode, styles) -> Flowable:
                 col = None
     if col is None:
         col = doc.theme.colors.get("border", colors.HexColor("#e5e7eb"))
-    return HR(width=stroke, color=col)
+    style = node.props.get("style") or "solid"
+    m_top = float(node.props.get("margin_top", 0.0) or 0.0)
+    m_bottom = float(node.props.get("margin_bottom", 0.0) or 0.0)
+    return HR(width=stroke, color=col, style=style, m_top=m_top, m_bottom=m_bottom)
 
 
 def _spacer_flowable(doc: Document, node: SpacerNode, styles) -> Flowable:
