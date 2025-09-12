@@ -191,7 +191,76 @@ def render(doc: Document, output_path: str) -> None:
     for child in doc.root.children:
         story.extend(_to_flowables(doc, child, styles))
 
-    pdf.build(story)
+    # Page decorations: header/footer and page numbers
+    def _draw_header_footer(canv, rl_doc):
+        # Header
+        if doc.header:
+            if callable(doc.header):
+                try:
+                    doc.header(canv, rl_doc, doc)
+                except Exception:
+                    pass
+            else:
+                canv.saveState()
+                canv.setFont(doc.theme.typography["font"], 10)
+                canv.setFillColor(doc.theme.colors["muted"])  # muted
+                y = rl_doc.height + rl_doc.topMargin + 10
+                canv.drawString(rl_doc.leftMargin, y, str(doc.header))
+                canv.restoreState()
+        # Footer
+        if doc.footer:
+            if callable(doc.footer):
+                try:
+                    doc.footer(canv, rl_doc, doc)
+                except Exception:
+                    pass
+            else:
+                canv.saveState()
+                canv.setFont(doc.theme.typography["font"], 9)
+                canv.setFillColor(doc.theme.colors["muted"])  # muted
+                y = rl_doc.bottomMargin - 16
+                canv.drawString(rl_doc.leftMargin, y, str(doc.footer))
+                canv.restoreState()
+
+    # Page numbering canvas
+    class NumberedCanvas(canvas.Canvas):
+        def __init__(self, *args, **kwargs):
+            canvas.Canvas.__init__(self, *args, **kwargs)
+            self._saved_page_states = []
+
+        def showPage(self):
+            self._saved_page_states.append(dict(self.__dict__))
+            canvas.Canvas.showPage(self)
+
+        def save(self):
+            """Add page info to each page (page x of y)."""
+            total = len(self._saved_page_states)
+            for state in self._saved_page_states:
+                self.__dict__.update(state)
+                if doc.page_numbers:
+                    self.draw_page_number(self._pageNumber, total)
+                canvas.Canvas.showPage(self)
+            canvas.Canvas.save(self)
+
+        def draw_page_number(self, page_num, total):
+            fmt = doc.page_numbers
+            if not fmt:
+                return
+            if fmt == "x":
+                label = f"{page_num}"
+            else:  # default 'xofy'
+                label = f"{page_num} / {total}"
+            self.saveState()
+            self.setFont(doc.theme.typography["font"], 9)
+            self.setFillColor(doc.theme.colors["muted"])
+            y = pdf.bottomMargin - 16 if hasattr(pdf, 'bottomMargin') else 24
+            # right-align within page width minus right margin
+            page_w, _ = pdf.pagesize
+            x = page_w - pdf.rightMargin
+            self.drawRightString(x, y, label)
+            self.restoreState()
+
+    pdf.build(story, onFirstPage=_draw_header_footer, onLaterPages=_draw_header_footer, canvasmaker=NumberedCanvas)
 
 
 def _text_flowable(doc: Document, node: TextNode, styles) -> Paragraph:

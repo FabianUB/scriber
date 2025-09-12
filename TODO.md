@@ -25,9 +25,25 @@ Legend: P0 = highest priority, P1 = next, P2 = later
   - Pagination: row-splitting, header repeat on page-break.
 
 - Headers/Footers & Page Numbers
-  - API: `with pdf.document(..., header=fn, footer=fn)` or callbacks per page.
+  - API: `with pdf.document(..., header=..., footer=..., page_numbers='x'|'xofy'|False)`; header/footer can be strings or callables.
+  - Implement page numbering including "Page x of y".
+  - Add demo showing header band with title/date and footer with page numbers.
+
+- Cover + TOC
+  - API: helper(s) to insert a cover page layout; `ui.toc()` to generate a clickable table of contents.
+  - Generate PDF outline/bookmarks based on headings.
 
 ## P1
+- Typography / Fonts
+  - Register custom TTF/OTF, bold/italic variants; default to Inter/Source families.
+  - Hyphenation/justification improvements; keep-with-next for headings.
+
+- Table Style Presets + Auto Fit
+  - Presets: minimal, classic, condensed.
+  - Auto-fit column widths based on content min/max; ellipsis for overflow.
+
+- Captions + Numbering
+  - Auto number for figures/tables; `ui.caption()` with cross-references.
 - Plotly/Altair vector path (SVG) behind optional deps; fallback to PNG.
 - Theme: dark preset + high-contrast preset.
 - Font management
@@ -37,6 +53,14 @@ Legend: P0 = highest priority, P1 = next, P2 = later
   - Clickable buttons/links via `canvas.linkURL` regions.
 
 ## P2
+- Grid / Multi-column layouts
+  - Two/three-column text flows; sidebars; consistent gutters.
+
+- Callouts / KPI components
+  - Info/warning/success boxes with icons, subtle backgrounds, optional titles.
+
+- Links & Cross-refs
+  - Clickable links and internal document anchors.
 - Grid and Stack containers (absolute or z-index overlays).
 - Image component with URL/file/bytes support and caching.
 - HTML snippet support (WeasyPrint-based renderer as optional backend).

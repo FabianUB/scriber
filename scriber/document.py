@@ -34,6 +34,10 @@ class Document:
     margin: int = 32
     theme: Theme = field(default_factory=default_theme)
     settings: Settings = field(default_factory=default_settings)
+    # Simple header/footer configuration
+    header: object | None = None  # str or callable(canvas, doc_rl, doc)
+    footer: object | None = None  # str or callable(canvas, doc_rl, doc)
+    page_numbers: object | None = "xofy"  # 'x', 'xofy', False
 
     def __post_init__(self) -> None:
         self.root = ColumnNode(gap=self.theme.spacing["md"])  # default vertical flow

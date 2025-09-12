@@ -16,6 +16,9 @@ def document(
     thousands: Optional[str] = None,
     decimals: Optional[int] = None,
     font: Optional[str] = None,
+    header: Optional[object] = None,
+    footer: Optional[object] = None,
+    page_numbers: Optional[object] = "xofy",
 ):
     # Theme selection
     if isinstance(theme, str) or theme is None:
@@ -45,4 +48,13 @@ def document(
     if decimals is not None:
         settings_obj.number_decimals = int(decimals)
 
-    return _Document(output_path=output_path, size=size, margin=margin, theme=theme_obj, settings=settings_obj)
+    return _Document(
+        output_path=output_path,
+        size=size,
+        margin=margin,
+        theme=theme_obj,
+        settings=settings_obj,
+        header=header,
+        footer=footer,
+        page_numbers=page_numbers,
+    )

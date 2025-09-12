@@ -27,6 +27,7 @@ def build_table_demo():
             ui.h2("Table Demo")
             ui.text("Simple order summary table.")
             ui.spacer("sm")
+            ui.separator()
             ui.table(
                 data,
                 zebra=True,

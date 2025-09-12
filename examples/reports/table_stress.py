@@ -81,6 +81,7 @@ def build_tables():
             ui.h3("Wide (8 columns, mixed types)")
             ui.table(
                 df2,
+                columns=cols2,  # ensure header when using list-of-lists fallback
                 zebra=True,
                 align=None,  # triggers numeric auto-align
                 col_widths=["12%", "12%", "12%", "12%", "12%", "16%", "12%", "12%"],
@@ -142,4 +143,3 @@ def build_tables():
 if __name__ == "__main__":
     random.seed(0)
     build_tables()
-

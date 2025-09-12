@@ -83,4 +83,21 @@ with pdf.document("out.pdf", size="A4", margin=32, currency="€", decimal=",", 
             with ui.row(justify="end", gap=8):
                 ui.button("Primary")
                 ui.button("Secondary", variant="outline")
+
+## Headers / Footers / Page Numbers
+
+Add simple headers/footers and page numbers globally in `pdf.document(...)`:
+
+```
+def header(canv, rl_doc, doc):
+    canv.setFont(doc.theme.typography["font"], 10)
+    canv.setFillColor(doc.theme.colors["muted"])
+    y = rl_doc.height + rl_doc.topMargin + 10
+    canv.drawString(rl_doc.leftMargin, y, "Acme Corp — Report")
+
+with pdf.document("out.pdf", header=header, footer="Confidential", page_numbers="xofy"):
+    ...
+```
+
+See example: `examples/reports/header_footer_demo.py`.
 ```
