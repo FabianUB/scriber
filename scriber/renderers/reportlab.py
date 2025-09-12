@@ -851,48 +851,59 @@ def _labeled_separator_flowables(doc: Document, node: LabeledSeparatorNode, styl
     label = Paragraph(text, label_style)
 
     class _LabeledSep(Flowable):
-        def __init__(self, label: Paragraph):
+        def __init__(self, label: Paragraph, stroke: float, color, style: str, gap: float, m_top: float, m_bottom: float):
             super().__init__()
             self.label = label
-            self.table = None
-
-        def _build(self, availWidth):
-            # Wrap label to its intrinsic width (single line if fits)
-            lw, lh = self.label.wrap(availWidth, 1e6)
-            # Compute left/right rule widths
-            total_gaps = 2 * gap
-            left_right = max(availWidth - lw - total_gaps, 0)
-            left_w = right_w = left_right / 2.0
-            # Build row: HR | gap | label | gap | HR
-            left_hr = HR(width=stroke, color=col, style=style, m_top=m_top, m_bottom=m_bottom)
-            right_hr = HR(width=stroke, color=col, style=style, m_top=m_top, m_bottom=m_bottom)
-            spacer_left = Spacer(gap, 0)
-            spacer_right = Spacer(gap, 0)
-            data = [[left_hr, spacer_left, self.label, spacer_right, right_hr]]
-            col_widths = [left_w, gap, lw, gap, right_w]
-            t = Table(data, colWidths=col_widths)
-            t.setStyle(TableStyle([
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                ("TOPPADDING", (0, 0), (-1, -1), 0),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-            ]))
-            self.table = t
+            self.stroke = stroke
+            self.color = color
+            self.style = style
+            self.gap = gap
+            self.m_top = m_top
+            self.m_bottom = m_bottom
+            self._lw = 0
+            self._lh = 0
+            self._aw = 0
 
         def wrap(self, availWidth, availHeight):
-            self._build(availWidth)
-            return self.table.wrap(availWidth, availHeight)
-
-        def split(self, availWidth, availHeight):
-            if not self.table:
-                self._build(availWidth)
-            return self.table.split(availWidth, availHeight)
+            self._aw = availWidth
+            # Wrap label to max allowed width (accounting for gaps)
+            max_label_w = max(availWidth - 2 * self.gap, 0)
+            lw, lh = self.label.wrap(max_label_w, 1e6)
+            self._lw, self._lh = lw, lh
+            content_h = max(self.stroke, lh)
+            return availWidth, self.m_top + content_h + self.m_bottom
 
         def draw(self):
-            self.table.drawOn(self.canv, 0, 0)
+            c = self.canv
+            # Line style
+            c.setStrokeColor(self.color)
+            c.setLineWidth(self.stroke)
+            s = (self.style or "solid").lower()
+            if s == "dashed":
+                c.setDash(6, 3)
+            elif s == "dotted":
+                c.setDash(1, 2)
+            else:
+                c.setDash()
 
-    return [_LabeledSep(label)]
+            # Y coordinate centered within content area
+            content_h = max(self.stroke, self._lh)
+            y = self.m_bottom + content_h / 2.0
+
+            # Compute line segments
+            left_len = max((self._aw - self._lw - 2 * self.gap) / 2.0, 0)
+            right_start = left_len + self.gap + self._lw + self.gap
+
+            # Draw lines
+            c.line(0, y, left_len, y)
+            c.line(right_start, y, self._aw, y)
+
+            # Draw label centered on y
+            label_x = left_len + self.gap
+            label_y = y - (self._lh / 2.0)
+            self.label.drawOn(c, label_x, label_y)
+
+    return [_LabeledSep(label, stroke, col, style, gap, m_top, m_bottom)]
 
 
 def _spacer_flowable(doc: Document, node: SpacerNode, styles) -> Flowable:
