@@ -15,6 +15,7 @@ from reportlab.platypus import (
     Flowable,
     Image,
 )
+from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 
 from ..core.nodes import (
     BadgeNode,
@@ -509,12 +510,31 @@ def _table_flowables(doc: Document, node: TableNode, styles) -> List[Flowable]:
 
     data = []
     if header and cols:
-        # Header style
+        # Base header style (bold vs normal)
         if header_bold:
-            header_style = ParagraphStyle(name="Header", parent=styles["Body"], fontName=_bold_font_name(theme.typography["font"]))
+            base_header_style = ParagraphStyle(name="Header", parent=styles["Body"], fontName=_bold_font_name(theme.typography["font"]))
         else:
-            header_style = styles["Body"]
-        data.append([Paragraph(str(h), header_style) for h in cols])
+            base_header_style = styles["Body"]
+
+        def ps_with_align(base, align_token):
+            if not align_token:
+                return base
+            token = str(align_token).lower()
+            align_map = {"left": TA_LEFT, "center": TA_CENTER, "right": TA_RIGHT}
+            if token not in align_map:
+                return base
+            return ParagraphStyle(name=base.name + f"-{token}", parent=base, alignment=align_map[token])
+
+        # Build per-column header styles according to header_align (if provided)
+        header_cells = []
+        for i, h in enumerate(cols):
+            if isinstance(header_align_prop, (list, tuple)):
+                a = header_align_prop[i] if i < len(header_align_prop) else None
+            else:
+                a = header_align_prop
+            st = ps_with_align(base_header_style, a)
+            header_cells.append(Paragraph(str(h), st))
+        data.append(header_cells)
     for row in rows:
         data.append([Paragraph(fmt_cell(ci, (row[ci] if ci < len(row) else None)), styles["Body"]) for ci in range(n_cols)])
 
@@ -608,16 +628,7 @@ def _table_flowables(doc: Document, node: TableNode, styles) -> List[Flowable]:
             for c, a in enumerate(aligns):
                 style_cmds.append(("ALIGN", (c, 0), (c, -1), a))
 
-            # Header alignments override if provided
-            if self.cols and header_align_prop:
-                def map_align(a):
-                    return {"left": "LEFT", "center": "CENTER", "right": "RIGHT"}.get(str(a).lower(), "LEFT")
-                if isinstance(header_align_prop, (list, tuple)):
-                    harr = [map_align(a) for a in header_align_prop]
-                else:
-                    harr = [map_align(header_align_prop)] * n_cols
-                for c, a in enumerate(harr[:n_cols]):
-                    style_cmds.append(("ALIGN", (c, 0), (c, 0), a))
+            # Header alignment via ParagraphStyle; table-level header align override not required
 
             t.setStyle(TableStyle(style_cmds))
             self._t = t
