@@ -15,6 +15,7 @@ from reportlab.platypus import (
     Flowable,
     Image,
 )
+from reportlab.pdfgen import canvas
 from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 
 from ..core.nodes import (
