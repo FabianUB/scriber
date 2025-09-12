@@ -116,3 +116,18 @@ Standard development flow applies (feature branches, PRs, etc.).
 
 ### Documentation Added
 - Initial docs structure in `docs/` with component pages and getting started guide.
+
+## API Guidelines (Standardization)
+
+- Size props: accept both named tokens and numeric points.
+  - Tokens: spacing `xs|sm|md|lg|xl|2xl`, control sizes `sm|md|lg`.
+  - Numeric: treated as points; very small spacer heights are clamped to >= 0.5pt for visibility.
+- Layout gaps/padding: use a consistent prop name `gap` for spacing between children; `padding` for inner padding.
+- Width distribution: rows use `equal=True` for equal/weighted columns; children can set `grow` (default 1).
+- Alignment naming:
+  - `align` for body cells (tables), `header_align` for table header cells.
+  - Row `justify`: `start|center|end`.
+- Separator props: `thickness`, `color`, `style`, `margin`, `margin_top`, `margin_bottom`.
+  - Labeled separator mirrors the same names and adds `gap` (between label and lines) and `muted` for label style.
+- Variants: components use `variant` for stylistic variants (e.g., buttons/cards).
+- Theme tokens: where `color` accepts strings, allow theme color keys or CSS-like hex (e.g., `"#2563eb"`).

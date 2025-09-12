@@ -28,6 +28,7 @@ from ..core.nodes import (
     SpacerNode,
     FigureNode,
     TableNode,
+    LabeledSeparatorNode,
     TextNode,
     PageNode,
 )
@@ -816,6 +817,84 @@ def _separator_flowable(doc: Document, node: SeparatorNode, styles) -> Flowable:
     return HR(width=stroke, color=col, style=style, m_top=m_top, m_bottom=m_bottom)
 
 
+def _labeled_separator_flowables(doc: Document, node: LabeledSeparatorNode, styles) -> List[Flowable]:
+    text = str(node.props.get("text", ""))
+    thickness = node.props.get("thickness")
+    try:
+        stroke = float(thickness) if thickness is not None else 1.0
+    except Exception:
+        stroke = 1.0
+    col_in = node.props.get("color")
+    col = None
+    if isinstance(col_in, str):
+        if col_in in doc.theme.colors:
+            col = doc.theme.colors[col_in]
+        else:
+            try:
+                col = colors.HexColor(col_in)
+            except Exception:
+                col = None
+    if col is None:
+        col = doc.theme.colors.get("border", colors.HexColor("#e5e7eb"))
+    style = node.props.get("style") or "solid"
+    m_top = float(node.props.get("margin_top", 0.0) or 0.0)
+    m_bottom = float(node.props.get("margin_bottom", 0.0) or 0.0)
+    gap = node.props.get("gap")
+    try:
+        gap = float(gap) if gap is not None else doc.theme.spacing.get("sm", 8)
+    except Exception:
+        gap = doc.theme.spacing.get("sm", 8)
+
+    # Choose label style (muted or normal)
+    muted = bool(node.props.get("muted", True))
+    label_style = styles["Muted"] if muted else styles["Body"]
+    label = Paragraph(text, label_style)
+
+    class _LabeledSep(Flowable):
+        def __init__(self, label: Paragraph):
+            super().__init__()
+            self.label = label
+            self.table = None
+
+        def _build(self, availWidth):
+            # Wrap label to its intrinsic width (single line if fits)
+            lw, lh = self.label.wrap(availWidth, 1e6)
+            # Compute left/right rule widths
+            total_gaps = 2 * gap
+            left_right = max(availWidth - lw - total_gaps, 0)
+            left_w = right_w = left_right / 2.0
+            # Build row: HR | gap | label | gap | HR
+            left_hr = HR(width=stroke, color=col, style=style, m_top=m_top, m_bottom=m_bottom)
+            right_hr = HR(width=stroke, color=col, style=style, m_top=m_top, m_bottom=m_bottom)
+            spacer_left = Spacer(gap, 0)
+            spacer_right = Spacer(gap, 0)
+            data = [[left_hr, spacer_left, self.label, spacer_right, right_hr]]
+            col_widths = [left_w, gap, lw, gap, right_w]
+            t = Table(data, colWidths=col_widths)
+            t.setStyle(TableStyle([
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ]))
+            self.table = t
+
+        def wrap(self, availWidth, availHeight):
+            self._build(availWidth)
+            return self.table.wrap(availWidth, availHeight)
+
+        def split(self, availWidth, availHeight):
+            if not self.table:
+                self._build(availWidth)
+            return self.table.split(availWidth, availHeight)
+
+        def draw(self):
+            self.table.drawOn(self.canv, 0, 0)
+
+    return [_LabeledSep(label)]
+
+
 def _spacer_flowable(doc: Document, node: SpacerNode, styles) -> Flowable:
     size_val = node.props.get("size")
     if isinstance(size_val, (int, float)):
@@ -1011,6 +1090,8 @@ def _to_flowables(doc: Document, node: Node, styles) -> List[Flowable]:
         return _figure_flowables(doc, node, styles)
     if isinstance(node, TableNode):
         return _table_flowables(doc, node, styles)
+    if isinstance(node, LabeledSeparatorNode):
+        return _labeled_separator_flowables(doc, node, styles)
     if isinstance(node, CardNode):
         return _card_flowables(doc, node, styles)
     if isinstance(node, RowNode):

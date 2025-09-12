@@ -45,6 +45,12 @@ class SpacerNode(Node):
 
 
 @dataclass
+class LabeledSeparatorNode(Node):
+    def __init__(self, text: str, **props: Any) -> None:
+        super().__init__("labeled_separator", {"text": text, **props})
+
+
+@dataclass
 class FigureNode(Node):
     def __init__(
         self,
