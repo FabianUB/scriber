@@ -139,16 +139,21 @@ def _format_percent(num: float, settings: Settings, decimals: int | None = None)
 class HR(Flowable):
     def __init__(self, width=1, color=colors.HexColor("#e5e7eb")):
         super().__init__()
-        self.stroke_width = width
+        self.stroke_width = width  # thickness in points
         self.color = color
+        self._avail_width = 0
 
     def wrap(self, availWidth, availHeight):
-        return availWidth, self.stroke_width + 1
+        self._avail_width = availWidth
+        # Ensure the flowable reserves at least the stroke thickness in height
+        h = max(self.stroke_width, 0.5)
+        return availWidth, h
 
     def draw(self):
         self.canv.setStrokeColor(self.color)
         self.canv.setLineWidth(self.stroke_width)
-        self.canv.line(0, 0, self.width, 0)
+        # Draw a horizontal line across the available width
+        self.canv.line(0, self.stroke_width / 2.0, self._avail_width, self.stroke_width / 2.0)
 
 
 def render(doc: Document, output_path: str) -> None:
