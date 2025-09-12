@@ -74,7 +74,7 @@ Outputs:
 from scriber import pdf, ui
 from scriber.document import page
 
-with pdf.document("out.pdf", size="A4", margin=32):
+with pdf.document("out.pdf", size="A4", margin=32, currency="€", decimal=",", thousands=".", decimals=2, font="Helvetica"):
     with page():
         with ui.card():
             ui.h2("Hello, Scriber")

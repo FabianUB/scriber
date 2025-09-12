@@ -31,6 +31,7 @@ from ..core.nodes import (
     PageNode,
 )
 from ..document import Document
+from ..settings import Settings
 from ..theme.tokens import size_token
 from reportlab.lib.utils import ImageReader
 import io
@@ -107,6 +108,18 @@ def _bold_font_name(base: str) -> str:
         return "Courier-Bold"
     # Fallback: Helvetica-Bold is generally available
     return "Helvetica-Bold"
+
+
+def _apply_separators(s: str, settings: Settings) -> str:
+    # Convert from US-style string (',' thousands and '.' decimal) to desired
+    thou = settings.thousands_separator
+    dec = settings.decimal_separator
+    if thou == "," and dec == ".":
+        return s
+    # Temporarily replace to avoid collision
+    s = s.replace(",", "<T>").replace(".", "<D>")
+    s = s.replace("<T>", thou).replace("<D>", dec)
+    return s
 
 
 class HR(Flowable):
@@ -377,7 +390,7 @@ def _table_flowables(doc: Document, node: TableNode, styles) -> List[Flowable]:
     header_align_prop = node.props.get("header_align")
     header_bold = bool(node.props.get("header_bold", True))
     formats = node.props.get("formats", {}) or {}
-    currency_symbol = node.props.get("currency_symbol", "$")
+    currency_symbol = node.props.get("currency_symbol") or doc.settings.currency_symbol
     col_widths_prop = node.props.get("col_widths")
 
     cols, rows = _normalize_table_source(src, columns)
@@ -418,13 +431,27 @@ def _table_flowables(doc: Document, node: TableNode, styles) -> List[Flowable]:
         if fmt == "currency" and numeric_cols[ci]:
             try:
                 num = float(str(v).replace(",", ""))
-                return f"{currency_symbol}{num:,.2f}"
+                s = f"{num:,.{doc.settings.number_decimals}f}"
+                s = _apply_separators(s, doc.settings)
+                return f"{currency_symbol}{s}"
             except Exception:
                 return str(v)
         if isinstance(fmt, str) and fmt not in ("currency",):
             try:
                 num = float(str(v).replace(",", ""))
-                return format(num, fmt)
+                s = format(num, fmt)
+                # If fmt uses ',' as thousands, '.' as decimals, translate
+                if any(ch in s for ch in [",", "."]):
+                    s = _apply_separators(s, doc.settings)
+                return s
+            except Exception:
+                return str(v)
+        # Default numeric formatting
+        if numeric_cols[ci]:
+            try:
+                num = float(str(v).replace(",", ""))
+                s = f"{num:,.{doc.settings.number_decimals}f}"
+                return _apply_separators(s, doc.settings)
             except Exception:
                 return str(v)
         return str(v)

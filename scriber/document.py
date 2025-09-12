@@ -5,6 +5,7 @@ from typing import List, Optional
 
 from .core.nodes import ColumnNode, ContainerNode, PageNode
 from .theme.tokens import Theme, default_theme
+from .settings import Settings, default_settings
 
 
 _container_stack: List[ContainerNode] = []
@@ -32,6 +33,7 @@ class Document:
     size: str = "A4"
     margin: int = 32
     theme: Theme = field(default_factory=default_theme)
+    settings: Settings = field(default_factory=default_settings)
 
     def __post_init__(self) -> None:
         self.root = ColumnNode(gap=self.theme.spacing["md"])  # default vertical flow

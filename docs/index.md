@@ -9,4 +9,4 @@ Useful links:
 - Quick start: getting-started.md
 - Components overview: components/README.md
 - Theme tokens: theme.md
-
+ - Settings: settings.md
