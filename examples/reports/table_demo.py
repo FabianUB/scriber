@@ -27,9 +27,14 @@ def build_table_demo():
             ui.h2("Table Demo")
             ui.text("Simple order summary table.")
             ui.spacer("sm")
-            ui.table(data, align=["left", "right", "right"], zebra=True, compact=True)
+            ui.table(
+                data,
+                zebra=True,
+                compact=True,
+                formats={"Price": "currency"},
+                header_align=["left", "center", "right"],
+            )
 
 
 if __name__ == "__main__":
     build_table_demo()
-

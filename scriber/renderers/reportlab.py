@@ -35,6 +35,7 @@ from ..theme.tokens import size_token
 from reportlab.lib.utils import ImageReader
 import io
 import os
+import numbers
 try:
     from svglib.svglib import svg2rlg  # type: ignore
 except Exception:  # optional dependency
@@ -94,6 +95,18 @@ def _styles(doc: Document):
     )
     styles.add(ParagraphStyle(name="Button", parent=styles["Body"], alignment=1))
     return styles
+
+
+def _bold_font_name(base: str) -> str:
+    base_lower = (base or "").lower()
+    if "helvetica" in base_lower:
+        return "Helvetica-Bold"
+    if "times" in base_lower:
+        return "Times-Bold"
+    if "courier" in base_lower:
+        return "Courier-Bold"
+    # Fallback: Helvetica-Bold is generally available
+    return "Helvetica-Bold"
 
 
 class HR(Flowable):
@@ -361,14 +374,71 @@ def _table_flowables(doc: Document, node: TableNode, styles) -> List[Flowable]:
     zebra = bool(node.props.get("zebra", False))
     compact = bool(node.props.get("compact", False))
     align_prop = node.props.get("align")
+    header_align_prop = node.props.get("header_align")
+    header_bold = bool(node.props.get("header_bold", True))
+    formats = node.props.get("formats", {}) or {}
+    currency_symbol = node.props.get("currency_symbol", "$")
     col_widths_prop = node.props.get("col_widths")
 
     cols, rows = _normalize_table_source(src, columns)
+    n_cols = len(cols) if cols else (len(rows[0]) if rows else 0)
+
+    # Detect numeric columns when align not provided
+    numeric_cols = [False] * n_cols
+    if n_cols:
+        for ci in range(n_cols):
+            is_numeric = True
+            for r in rows:
+                if ci >= len(r):
+                    continue
+                v = r[ci]
+                if v is None:
+                    continue
+                if isinstance(v, numbers.Number):
+                    continue
+                # Try to parse strings
+                try:
+                    float(str(v).replace(",", ""))
+                except Exception:
+                    is_numeric = False
+                    break
+            numeric_cols[ci] = is_numeric
+
+    # Build body with formatting
+    def fmt_cell(ci: int, v):
+        if v is None:
+            return ""
+        fmt = None
+        # Resolve formats by column name or index
+        if isinstance(formats, dict):
+            if cols and ci < len(cols) and cols[ci] in formats:
+                fmt = formats[cols[ci]]
+            elif ci in formats:
+                fmt = formats[ci]
+        if fmt == "currency" and numeric_cols[ci]:
+            try:
+                num = float(str(v).replace(",", ""))
+                return f"{currency_symbol}{num:,.2f}"
+            except Exception:
+                return str(v)
+        if isinstance(fmt, str) and fmt not in ("currency",):
+            try:
+                num = float(str(v).replace(",", ""))
+                return format(num, fmt)
+            except Exception:
+                return str(v)
+        return str(v)
+
     data = []
     if header and cols:
-        data.append([Paragraph(str(h), styles["Body"]) for h in cols])
+        # Header style
+        if header_bold:
+            header_style = ParagraphStyle(name="Header", parent=styles["Body"], fontName=_bold_font_name(theme.typography["font"]))
+        else:
+            header_style = styles["Body"]
+        data.append([Paragraph(str(h), header_style) for h in cols])
     for row in rows:
-        data.append([Paragraph(str(c if c is not None else ""), styles["Body"]) for c in row])
+        data.append([Paragraph(fmt_cell(ci, (row[ci] if ci < len(row) else None)), styles["Body"]) for ci in range(n_cols)])
 
     # Dynamic flowable to compute widths and apply styles at layout time
     class _DataTable(Flowable):
@@ -426,7 +496,8 @@ def _table_flowables(doc: Document, node: TableNode, styles) -> List[Flowable]:
         def _build(self, availWidth):
             n_cols = len(self.data[0]) if self.data else 0
             col_widths = self._col_widths(availWidth)
-            t = Table(self.data, colWidths=col_widths or None, repeatRows=1)
+            repeat = 1 if (header and cols) else 0
+            t = Table(self.data, colWidths=col_widths or None, repeatRows=repeat)
             pad_y = theme.control["sizes"]["sm" if self.compact else "md"]["py"]
             pad_x = theme.control["sizes"]["sm" if self.compact else "md"]["px"]
             style_cmds = [
@@ -453,8 +524,22 @@ def _table_flowables(doc: Document, node: TableNode, styles) -> List[Flowable]:
 
             # Alignments per column
             aligns = self._alignments(n_cols)
+            # If no align provided, use numeric detection
+            if not self.align_prop:
+                aligns = ["RIGHT" if numeric_cols[c] else "LEFT" for c in range(n_cols)]
             for c, a in enumerate(aligns):
                 style_cmds.append(("ALIGN", (c, 0), (c, -1), a))
+
+            # Header alignments override if provided
+            if self.cols and header_align_prop:
+                def map_align(a):
+                    return {"left": "LEFT", "center": "CENTER", "right": "RIGHT"}.get(str(a).lower(), "LEFT")
+                if isinstance(header_align_prop, (list, tuple)):
+                    harr = [map_align(a) for a in header_align_prop]
+                else:
+                    harr = [map_align(header_align_prop)] * n_cols
+                for c, a in enumerate(harr[:n_cols]):
+                    style_cmds.append(("ALIGN", (c, 0), (c, 0), a))
 
             t.setStyle(TableStyle(style_cmds))
             self._t = t

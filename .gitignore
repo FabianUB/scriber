@@ -15,3 +15,6 @@ coverage.xml
 .mypy_cache/
 .DS_Store
 .uv/
+*.pdf
+examples/*.pdf
+AGENTS.md

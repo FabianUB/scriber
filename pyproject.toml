@@ -9,6 +9,7 @@ description = "Shadcn-inspired, Streamlit-like PDF builder for Python"
 authors = [{ name = "Your Name" }]
 requires-python = ">=3.10"
 dependencies = [
+  "matplotlib>=3.10.6",
   "reportlab>=3.6",
 ]
 readme = "AGENTS.md"
