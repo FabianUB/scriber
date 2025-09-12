@@ -779,7 +779,26 @@ def _row_flowables(doc: Document, node: RowNode, styles) -> List[Flowable]:
 
 
 def _separator_flowable(doc: Document, node: SeparatorNode, styles) -> Flowable:
-    return HR()
+    thickness = node.props.get("thickness")
+    try:
+        stroke = float(thickness) if thickness is not None else 1.0
+    except Exception:
+        stroke = 1.0
+
+    col_in = node.props.get("color")
+    col = None
+    if isinstance(col_in, str):
+        # Theme token name or hex
+        if col_in in doc.theme.colors:
+            col = doc.theme.colors[col_in]
+        else:
+            try:
+                col = colors.HexColor(col_in)
+            except Exception:
+                col = None
+    if col is None:
+        col = doc.theme.colors.get("border", colors.HexColor("#e5e7eb"))
+    return HR(width=stroke, color=col)
 
 
 def _spacer_flowable(doc: Document, node: SpacerNode, styles) -> Flowable:

@@ -99,7 +99,11 @@ def button(content: str, variant: str = "primary", **props):
     current_container().add(ButtonNode(content, variant=variant, **props))
 
 
-def separator(**props):
+def separator(thickness: Optional[float] = None, color: Optional[object] = None, **props):
+    if thickness is not None:
+        props["thickness"] = thickness
+    if color is not None:
+        props["color"] = color
     current_container().add(SeparatorNode(**props))
 
 
