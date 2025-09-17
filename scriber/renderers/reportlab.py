@@ -34,6 +34,7 @@ from ..core.nodes import (
     PageNode,
 )
 from ..document import Document
+from .handlers.layout import separator_flowable as _sep_handler, labeled_separator_flowables as _labeled_sep_handler
 from ..settings import Settings
 from ..theme.tokens import size_token
 from reportlab.lib.utils import ImageReader
@@ -868,126 +869,11 @@ def _row_flowables(doc: Document, node: RowNode, styles) -> List[Flowable]:
 
 
 def _separator_flowable(doc: Document, node: SeparatorNode, styles) -> Flowable:
-    thickness = node.props.get("thickness")
-    try:
-        stroke = float(thickness) if thickness is not None else 1.0
-    except Exception:
-        stroke = 1.0
-
-    col_in = node.props.get("color")
-    col = None
-    if isinstance(col_in, str):
-        # Theme token name or hex
-        if col_in in doc.theme.colors:
-            col = doc.theme.colors[col_in]
-        else:
-            try:
-                col = colors.HexColor(col_in)
-            except Exception:
-                col = None
-    if col is None:
-        col = doc.theme.colors.get("border", colors.HexColor("#e5e7eb"))
-    style = node.props.get("style") or "solid"
-    m_top = float(node.props.get("margin_top", 0.0) or 0.0)
-    m_bottom = float(node.props.get("margin_bottom", 0.0) or 0.0)
-    return HR(width=stroke, color=col, style=style, m_top=m_top, m_bottom=m_bottom)
+    return _sep_handler(doc, node, styles)
 
 
 def _labeled_separator_flowables(doc: Document, node: LabeledSeparatorNode, styles) -> List[Flowable]:
-    text = str(node.props.get("text", ""))
-    thickness = node.props.get("thickness")
-    try:
-        stroke = float(thickness) if thickness is not None else 1.0
-    except Exception:
-        stroke = 1.0
-    col_in = node.props.get("color")
-    col = None
-    if isinstance(col_in, str):
-        if col_in in doc.theme.colors:
-            col = doc.theme.colors[col_in]
-        else:
-            try:
-                col = colors.HexColor(col_in)
-            except Exception:
-                col = None
-    if col is None:
-        col = doc.theme.colors.get("border", colors.HexColor("#e5e7eb"))
-    style = node.props.get("style") or "solid"
-    m_top = float(node.props.get("margin_top", 0.0) or 0.0)
-    m_bottom = float(node.props.get("margin_bottom", 0.0) or 0.0)
-    gap = node.props.get("gap")
-    try:
-        gap = float(gap) if gap is not None else doc.theme.spacing.get("sm", 8)
-    except Exception:
-        gap = doc.theme.spacing.get("sm", 8)
-
-    # Choose label style (muted or normal)
-    muted = bool(node.props.get("muted", True))
-    label_style = styles["Muted"] if muted else styles["Body"]
-    label = Paragraph(text, label_style)
-
-    class _LabeledSep(Flowable):
-        def __init__(self, label: Paragraph, stroke: float, color, style: str, gap: float, m_top: float, m_bottom: float):
-            super().__init__()
-            self.label = label
-            self.stroke = stroke
-            self.color = color
-            self.style = style
-            self.gap = gap
-            self.m_top = m_top
-            self.m_bottom = m_bottom
-            self._lw = 0
-            self._lh = 0
-            self._aw = 0
-
-        def wrap(self, availWidth, availHeight):
-            from reportlab.pdfbase.pdfmetrics import stringWidth
-            self._aw = availWidth
-            # Compute an intrinsic single-line width approximation for the label
-            max_label_w = max(availWidth - 2 * self.gap, 0)
-            try:
-                fn = getattr(self.label, 'style', None).fontName if hasattr(self.label, 'style') else None
-                fs = getattr(self.label, 'style', None).fontSize if hasattr(self.label, 'style') else None
-                intrinsic = stringWidth(self.label.text, fn or "Helvetica", fs or 10)
-            except Exception:
-                intrinsic = max_label_w
-            lw_constraint = min(max_label_w, intrinsic)
-            lw, lh = self.label.wrap(lw_constraint, 1e6)
-            self._lw, self._lh = lw, lh
-            content_h = max(self.stroke, lh)
-            return availWidth, self.m_top + content_h + self.m_bottom
-
-        def draw(self):
-            c = self.canv
-            # Line style
-            c.setStrokeColor(self.color)
-            c.setLineWidth(self.stroke)
-            s = (self.style or "solid").lower()
-            if s == "dashed":
-                c.setDash(6, 3)
-            elif s == "dotted":
-                c.setDash(1, 2)
-            else:
-                c.setDash()
-
-            # Y coordinate centered within content area
-            content_h = max(self.stroke, self._lh)
-            y = self.m_bottom + content_h / 2.0
-
-            # Compute line segments
-            left_len = max((self._aw - self._lw - 2 * self.gap) / 2.0, 0)
-            right_start = left_len + self.gap + self._lw + self.gap
-
-            # Draw lines
-            c.line(0, y, left_len, y)
-            c.line(right_start, y, self._aw, y)
-
-            # Draw label centered on y
-            label_x = left_len + self.gap
-            label_y = y - (self._lh / 2.0)
-            self.label.drawOn(c, label_x, label_y)
-
-    return [_LabeledSep(label, stroke, col, style, gap, m_top, m_bottom)]
+    return _labeled_sep_handler(doc, node, styles)
 
 
 def _spacer_flowable(doc: Document, node: SpacerNode, styles) -> Flowable:
