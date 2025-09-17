@@ -68,10 +68,7 @@ scriber/
   theme/tokens.py # shadcn-inspired tokens
 examples/
   invoices/
-    invoice_basic.py
-    invoice_shadcn.py
-    invoice_classic.py
-    invoice_default.py
+    invoice.py
   charts/
     matplotlib.py
     seaborn.py
@@ -95,6 +92,29 @@ AGENTS.md
 
 - Components are shadcn-inspired, not actual React components. We mirror design tokens (spacing, radii, colors, typography) and ergonomics in Python.
 - Renderer is initially ReportLab (pure Python, pagination-capable). HTML→PDF can be added later if needed.
+
+## Architecture (Components Split)
+
+- UI Components (`scriber/components/*`): user-facing DSL helpers that create Nodes and manage composition (e.g., `separator`, `labeled_separator`).
+- Renderer Handlers (`scriber/renderers/reportlab/handlers/*`): per-node rendering to ReportLab flowables (layout, styling, pagination decisions).
+- Core (`scriber/core/*`): Node definitions and shared data structures (stable contracts across renderers).
+- Base Renderer Utilities (`scriber/renderers/reportlab/base.py`): shared helpers (styles, color/size resolution, common flowables like HR).
+- Facade (`scriber/ui.py`): re-exports component helpers to keep the public API stable.
+
+Contributor workflow:
+- Add/modify what authors write → `scriber/components/*` (builders).
+- Add/modify how it renders → `scriber/renderers/reportlab/handlers/*` (handlers) and register in the central dispatch (TBD as we migrate).
+
+### Adding a New Component
+- Define a Node (only if needed) in `scriber/core/nodes.py`.
+- Add a builder in `scriber/components/<name>.py` creating that Node (normalize props, tokens→points, context managers if needed).
+- Implement a handler in `scriber/renderers/reportlab/handlers/<name>.py` with signature `(doc, node, styles) -> list[Flowable]`.
+- Register the handler in `scriber/renderers/reportlab/dispatch.py` mapping `node.type` → function.
+- Update docs in `docs/components/<name>.md` and add a small example under `examples/components/`.
+
+### Style/Helper Changes
+- Shared color/number/percent/figure utils live in `scriber/renderers/reportlab/base.py`.
+- Styles are created in the renderer; we may extract these into base in the future for easier testing.
 
 ## Git
 

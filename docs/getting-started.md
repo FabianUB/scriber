@@ -14,15 +14,11 @@ uv sync
 ## Quick Example
 
 ```
-uv run python examples/invoices/invoice_shadcn.py   # shadcn preset
-uv run python examples/invoices/invoice_classic.py  # classic preset
-uv run python examples/invoices/invoice_default.py  # default preset
+uv run python examples/invoices/invoice.py
 ```
 
-Outputs:
-- `examples/invoices/output_invoice_shadcn.pdf`
-- `examples/invoices/output_invoice_classic.pdf`
-- `examples/invoices/output_invoice_default.pdf`
+Output:
+- `examples/invoices/output_invoice.pdf`
 
 ## Charts (P0)
 

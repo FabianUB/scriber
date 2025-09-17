@@ -1,24 +1,15 @@
 from __future__ import annotations
 from typing import List, Tuple
 
-from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, LETTER
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
-    Spacer,
-    Table,
-    TableStyle,
-    KeepTogether,
-    KeepInFrame,
-    Flowable,
-    Image,
 )
 from reportlab.pdfgen import canvas
-from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 
-from ..core.nodes import (
+from ...core.nodes import (
     BadgeNode,
     ButtonNode,
     CardNode,
@@ -33,11 +24,24 @@ from ..core.nodes import (
     TextNode,
     PageNode,
 )
-from ..document import Document
-from .handlers.layout import separator_flowable as _sep_handler, labeled_separator_flowables as _labeled_sep_handler
-from ..settings import Settings
-from ..theme.tokens import size_token
-from reportlab.lib.utils import ImageReader
+from ...document import Document
+from .handlers.layout import (
+    separator_flowable as _sep_handler,
+    labeled_separator_flowables as _labeled_sep_handler,
+    row_flowables as _row_handler,
+    column_flowables as _column_handler,
+    spacer_flowable as _spacer_handler,
+)
+from .handlers.typography import text_flowable as _text_handler
+from .handlers.badge import badge_flowable as _badge_handler
+from .handlers.button import button_flowable as _button_handler
+from .handlers.card import card_flowables as _card_handler
+from .handlers.table import table_flowables as _table_handler
+from .handlers.figure import figure_flowables as _figure_handler
+from ...settings import Settings
+from ...theme.tokens import size_token
+from .base import create_styles
+from . import dispatch
 import io
 import os
 import numbers
@@ -55,52 +59,7 @@ PAGE_SIZES = {
 
 
 def _styles(doc: Document):
-    theme = doc.theme
-    base_font = theme.typography["font"]
-    styles = getSampleStyleSheet()
-    styles.add(
-        ParagraphStyle(
-            name="Body",
-            parent=styles["BodyText"],
-            fontName=base_font,
-            fontSize=theme.typography["size_base"],
-            leading=theme.typography["size_base"] + 2,
-            textColor=theme.colors["foreground"],
-        )
-    )
-    styles.add(
-        ParagraphStyle(
-            name="Muted",
-            parent=styles["Body"],
-            textColor=theme.colors["muted"],
-        )
-    )
-    styles.add(
-        ParagraphStyle(
-            name="H1",
-            parent=styles["Body"],
-            fontSize=theme.typography["h1"],
-            leading=theme.typography["h1"] + 2,
-        )
-    )
-    styles.add(
-        ParagraphStyle(
-            name="H2",
-            parent=styles["Body"],
-            fontSize=theme.typography["h2"],
-            leading=theme.typography["h2"] + 2,
-        )
-    )
-    styles.add(
-        ParagraphStyle(
-            name="H3",
-            parent=styles["Body"],
-            fontSize=theme.typography["h3"],
-            leading=theme.typography["h3"] + 2,
-        )
-    )
-    styles.add(ParagraphStyle(name="Button", parent=styles["Body"], alignment=1))
-    return styles
+    return create_styles(doc)
 
 
 def _bold_font_name(base: str) -> str:
@@ -139,36 +98,7 @@ def _format_percent(num: float, settings: Settings, decimals: int | None = None)
     return _apply_separators(base, settings)
 
 
-class HR(Flowable):
-    def __init__(self, width=1, color=colors.HexColor("#e5e7eb"), style: str = "solid", m_top: float = 0.0, m_bottom: float = 0.0):
-        super().__init__()
-        self.stroke_width = width  # thickness in points
-        self.color = color
-        self._avail_width = 0
-        self.style = style
-        self.m_top = max(m_top, 0.0)
-        self.m_bottom = max(m_bottom, 0.0)
-
-    def wrap(self, availWidth, availHeight):
-        self._avail_width = availWidth
-        # Ensure the flowable reserves at least the stroke thickness in height
-        h = self.m_top + max(self.stroke_width, 0.5) + self.m_bottom
-        return availWidth, h
-
-    def draw(self):
-        self.canv.setStrokeColor(self.color)
-        self.canv.setLineWidth(self.stroke_width)
-        # Dash styles
-        s = (self.style or "solid").lower()
-        if s == "dashed":
-            self.canv.setDash(6, 3)
-        elif s == "dotted":
-            self.canv.setDash(1, 2)
-        else:
-            self.canv.setDash()  # solid
-        # Draw a horizontal line across the available width accounting for margins
-        y = self.m_bottom + self.stroke_width / 2.0
-        self.canv.line(0, y, self._avail_width, y)
+from .base import HR
 
 
 def render(doc: Document, output_path: str) -> None:
@@ -231,15 +161,12 @@ def render(doc: Document, output_path: str) -> None:
             self._saved_page_states = []
 
         def showPage(self):
-            # Save current page state, but do not finalize the page yet
+            # Save current page state but do not emit the page yet
             self._saved_page_states.append(dict(self.__dict__))
-            # Start a new page without emitting the current one
             canvas.Canvas._startPage(self)
 
         def save(self):
             """Add page info to each page (page x of y)."""
-            # Include last page state
-            self._saved_page_states.append(dict(self.__dict__))
             total = len(self._saved_page_states)
             for state in self._saved_page_states:
                 self.__dict__.update(state)
@@ -271,184 +198,20 @@ def render(doc: Document, output_path: str) -> None:
     pdf.build(story, onFirstPage=_draw_header_footer, onLaterPages=_draw_header_footer, canvasmaker=NumberedCanvas)
 
 
-def _text_flowable(doc: Document, node: TextNode, styles) -> Paragraph:
-    variant = node.props.get("variant", "body")
-    text = node.props.get("text", "")
-    style_map = {
-        "body": styles["Body"],
-        "muted": styles["Muted"],
-        "h1": styles["H1"],
-        "h2": styles["H2"],
-        "h3": styles["H3"],
-    }
-    style = style_map.get(variant, styles["Body"])
-    return Paragraph(text, style)
+def _text_flowable(doc, node, styles): return _text_handler(doc, node,
+styles)
 
 
-def _badge_flowable(doc: Document, node: BadgeNode, styles) -> Table:
-    theme = doc.theme
-    text = node.props.get("text", "")
-    variant = node.props.get("variant", "default")
-    size_in = node.props.get("size", "md")
-    tok = size_token(theme, size_in)
-    ctrl = theme.control["sizes"].get(tok, theme.control["sizes"]["md"])
-
-    # shadcn-inspired variants
-    if variant in ("primary", "solid"):
-        bg, fg, border = theme.colors["primary"], colors.white, theme.colors["primary"]
-    elif variant == "success":
-        bg, fg, border = theme.colors["success"], colors.white, theme.colors["success"]
-    elif variant in ("outline", "secondary"):
-        bg, fg, border = theme.colors["card"], theme.colors["foreground"], theme.colors["border"]
-    elif variant == "danger":
-        bg, fg, border = theme.colors["danger"], colors.white, theme.colors["danger"]
-    else:  # default
-        bg, fg, border = theme.colors["surface"], theme.colors["foreground"], theme.colors["surface"]
-
-    cell = Paragraph(text, _with_color(styles["Body"], fg))
-    t = Table([[cell]])
-    t.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, -1), bg),
-                ("LEFTPADDING", (0, 0), (-1, -1), ctrl["px"]),
-                ("RIGHTPADDING", (0, 0), (-1, -1), ctrl["px"]),
-                ("TOPPADDING", (0, 0), (-1, -1), ctrl["py"]),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), ctrl["py"]),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("BOX", (0, 0), (-1, -1), 0.5, border),
-            ]
-        )
-    )
-    return t
+def _badge_flowable(doc, node, styles): return _badge_handler(doc, node,
+styles)
 
 
-def _button_flowable(doc: Document, node: ButtonNode, styles) -> Table:
-    theme = doc.theme
-    text = node.props.get("text", "")
-    variant = node.props.get("variant", "primary")
-    size_in = node.props.get("size", "md")
-    tok = size_token(theme, size_in)
-    ctrl = theme.control["sizes"].get(tok, theme.control["sizes"]["md"])
-
-    # Variants
-    if variant == "outline":
-        bg, border, fg = theme.colors["card"], theme.colors["border"], theme.colors["foreground"]
-    elif variant == "ghost":
-        bg, border, fg = theme.colors["card"], theme.colors["card"], theme.colors["primary"]
-    elif variant == "secondary":
-        bg, border, fg = theme.colors["surface"], theme.colors["surface"], theme.colors["foreground"]
-    elif variant == "danger":
-        bg, border, fg = theme.colors["danger"], theme.colors["danger"], colors.white
-    else:  # primary/default
-        bg, border, fg = theme.colors["primary"], theme.colors["primary"], colors.white
-
-    cell_style = _with_color(styles["Button"], fg)
-    # Adjust font size for control size
-    cell_style.fontSize = theme.typography[ctrl["font"]]
-    cell_style.leading = cell_style.fontSize + 2
-    cell = Paragraph(text, cell_style)
-    t = Table([[cell]])
-    t.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, -1), bg),
-                ("GRID", (0, 0), (-1, -1), 0.8, border),
-                ("LEFTPADDING", (0, 0), (-1, -1), ctrl["px"]),
-                ("RIGHTPADDING", (0, 0), (-1, -1), ctrl["px"]),
-                ("TOPPADDING", (0, 0), (-1, -1), ctrl["py"]),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), ctrl["py"]),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ]
-        )
-    )
-    return t
+def _button_flowable(doc, node, styles): return _button_handler(doc, node,
+styles)
 
 
-def _card_flowables(doc: Document, node: CardNode, styles) -> List[Flowable]:
-    theme = doc.theme
-    content: List[Flowable] = []
-    for child in node.children:
-        content.extend(_to_flowables(doc, child, styles))
-
-    # Build a single-column table where each child is its own row.
-    # This allows natural page-splitting (no giant KeepTogether cell).
-    rows = [[f] for f in content]
-    if not rows:
-        rows = [[Spacer(1, theme.spacing["sm"])]]
-    t = Table(rows)
-
-    pad = node.props.get("padding", theme.spacing["lg"])
-    variant = node.props.get("variant", "default")
-    bg = theme.colors["card"] if variant in ("default", "outline") else theme.colors["surface"]
-    border_color = theme.colors["border"] if variant in ("default", "outline") else theme.colors["surface"]
-    radius_prop = node.props.get("radius")
-    # Map radius prop to numeric points
-    if isinstance(radius_prop, str):
-        radius = float(theme.radii.get(radius_prop, 0))
-    elif isinstance(radius_prop, (int, float)):
-        radius = float(radius_prop)
-    else:
-        radius = 0.0
-
-    if radius <= 0:
-        n = len(rows)
-        style_cmds = [
-            ("BACKGROUND", (0, 0), (-1, -1), bg),
-            ("BOX", (0, 0), (-1, -1), 0.5, border_color),
-            ("LEFTPADDING", (0, 0), (-1, -1), pad),
-            ("RIGHTPADDING", (0, 0), (-1, -1), pad),
-            ("TOPPADDING", (0, 0), (-1, -1), 0),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-            ("TOPPADDING", (0, 0), (-1, 0), pad),
-            ("BOTTOMPADDING", (0, n - 1), (-1, n - 1), pad),
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ]
-        t.setStyle(TableStyle(style_cmds))
-        return [t]
-
-    # Rounded card path: keep content together; intended for small cards
-    class RoundedCard(Flowable):
-        def __init__(self, inner: Table, pad: float, bg, border_color, radius: float):
-            super().__init__()
-            self.inner = inner
-            self.pad = pad
-            self.bg = bg
-            self.border_color = border_color
-            self.radius = radius
-            self._w = 0
-            self._h = 0
-
-        def wrap(self, availWidth, availHeight):
-            iw, ih = self.inner.wrap(max(availWidth - 2 * self.pad, 0), max(availHeight - 2 * self.pad, 0))
-            self._w = min(availWidth, iw + 2 * self.pad)
-            self._h = ih + 2 * self.pad
-            return self._w, self._h
-
-        def draw(self):
-            c = self.canv
-            c.saveState()
-            c.setFillColor(self.bg)
-            c.setStrokeColor(self.border_color)
-            c.setLineWidth(0.5)
-            c.roundRect(0, 0, self._w, self._h, self.radius, stroke=1, fill=1)
-            c.restoreState()
-            self.inner.drawOn(c, self.pad, self.pad)
-
-    # Prepare inner table paddings since outer rounded box provides padding
-    n = len(rows)
-    t.setStyle(
-        TableStyle(
-            [
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                ("TOPPADDING", (0, 0), (-1, -1), 0),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ]
-        )
-    )
-    return [RoundedCard(t, pad, bg, border_color, radius)]
+def _card_flowables(doc, node, styles): return _card_handler(doc, node,
+styles)
 
 
 def _normalize_table_source(source, columns):
@@ -744,16 +507,13 @@ def _table_flowables(doc: Document, node: TableNode, styles) -> List[Flowable]:
 
 
 def _column_flowables(doc: Document, node: ColumnNode, styles) -> List[Flowable]:
-    flows: List[Flowable] = []
-    gap = node.props.get("gap", doc.theme.spacing["md"])
-    for i, child in enumerate(node.children):
-        flows.extend(_to_flowables(doc, child, styles))
-        if i < len(node.children) - 1 and gap:
-            flows.append(Spacer(1, gap))
-    return flows
+    return _column_handler(doc, node, styles)
 
 
 def _row_flowables(doc: Document, node: RowNode, styles) -> List[Flowable]:
+    # Delegate to handler; leave legacy code below unreachable for now during refactor
+    from .handlers.layout import row_flowables as _row_handler
+    return _row_handler(doc, node, styles)
     gap = node.props.get("gap", doc.theme.spacing["md"])
     equal = node.props.get("equal", False)
     align = node.props.get("justify", "start")
@@ -877,6 +637,9 @@ def _labeled_separator_flowables(doc: Document, node: LabeledSeparatorNode, styl
 
 
 def _spacer_flowable(doc: Document, node: SpacerNode, styles) -> Flowable:
+    # Delegate to handler; leave legacy code below unreachable for now during refactor
+    from .handlers.layout import spacer_flowable as _spacer_handler
+    return _spacer_handler(doc, node, styles)
     size_val = node.props.get("size")
     if isinstance(size_val, (int, float)):
         h = float(size_val)
@@ -1050,13 +813,16 @@ def _figure_flowables(doc: Document, node: FigureNode, styles) -> List[Flowable]
     return flows
 
 
-def _with_color(style: ParagraphStyle, color):
-    s = ParagraphStyle(name=style.name + "+color", parent=style)
-    s.textColor = color
-    return s
+# legacy helper removed; color styling handled in handlers
 
 
 def _to_flowables(doc: Document, node: Node, styles) -> List[Flowable]:
+    try:
+        h = dispatch.get(getattr(node, 'type', None))
+        if h:
+            return h(doc, node, styles)
+    except Exception:
+        pass
     if isinstance(node, TextNode):
         return [_text_flowable(doc, node, styles)]
     if isinstance(node, BadgeNode):
@@ -1084,3 +850,21 @@ def _to_flowables(doc: Document, node: Node, styles) -> List[Flowable]:
         return _column_flowables(doc, node, styles)
     # Fallback: ignore unknown nodes
     return []
+def _badge_flowable(doc: Document, node: BadgeNode, styles) -> Table:
+    return _badge_handler(doc, node, styles)
+
+
+def _button_flowable(doc: Document, node: ButtonNode, styles) -> Table:
+    return _button_handler(doc, node, styles)
+
+
+def _card_flowables(doc: Document, node: CardNode, styles) -> List[Flowable]:
+    return _card_handler(doc, node, styles)
+
+
+def _table_flowables(doc: Document, node: TableNode, styles) -> List[Flowable]:
+    return _table_handler(doc, node, styles)
+
+
+def _figure_flowables(doc: Document, node: FigureNode, styles) -> List[Flowable]:
+    return _figure_handler(doc, node, styles)
