@@ -1,26 +1,26 @@
-# Theme Tokens
+# Theme Tokens (Default Theme)
 
-Scriber mirrors shadcn-like tokens for a consistent look.
+Scriber ships with a single, well‑tuned default theme. It provides consistent tokens for spacing, radii, colors, and typography — optimized for print‑friendly PDFs.
 
 - Spacing: `xs, sm, md, lg, xl, 2xl`
 - Radii: `sm, md, lg`
 - Colors: `foreground, muted, surface, border, primary, success, warning, danger, card`
 - Typography: `font`, `size_sm`, `size_base`, `size_lg`, `h1`, `h2`, `h3`
 
-## Selecting a Theme
-
-You can pick a preset by name or pass a custom Theme:
-
+Usage
 ```
 from scriber import pdf
 
-# Use the shadcn-inspired preset (default)
-with pdf.document("out.pdf", theme="shadcn"):
+# Default theme is applied automatically
+with pdf.document("out.pdf"):
     ...
 
-# Other presets: "classic"
-with pdf.document("out-classic.pdf", theme="classic"):
+# You can override the default font at the document level
+with pdf.document("out-font.pdf", font="Helvetica"):
     ...
 ```
 
-Implementations live in `scriber/theme/tokens.py`: `shadcn_theme()`, `classic_theme()`. Customize by creating a `Theme` and passing it as `theme=Theme(...)`.
+Customization
+- Adjust look via document `font=` override and component‑level props.
+- For deeper customization, you can construct a Theme object and pass it:
+  - Note: the library currently focuses on a single default theme; external Themes are advanced usage.

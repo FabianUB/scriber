@@ -59,47 +59,9 @@ def default_theme() -> Theme:
     )
 
 
-def shadcn_theme() -> Theme:
-    t = default_theme()
-    t.name = "shadcn"
-    # Adjust to be closer to shadcn defaults
-    t.colors.update(
-        {
-            "surface": colors.HexColor("#f6f7f9"),
-            "border": colors.HexColor("#e5e7eb"),
-            "card": colors.HexColor("#ffffff"),
-            "primary": colors.HexColor("#111827"),  # nearly black for text emphasis
-        }
-    )
-    return t
-
-
-def classic_theme() -> Theme:
-    t = default_theme()
-    t.name = "classic"
-    t.typography["font"] = "Times-Roman"
-    t.colors.update(
-        {
-            "surface": colors.HexColor("#f8f5f0"),
-            "border": colors.HexColor("#d1d5db"),
-            "primary": colors.HexColor("#1f2937"),
-        }
-    )
-    return t
-
-
-THEMES = {
-    "default": default_theme,
-    "shadcn": shadcn_theme,
-    "classic": classic_theme,
-}
-
-
-def get_theme(name: str) -> Theme:
-    fn = THEMES.get(name.lower())
-    if not fn:
-        return default_theme()
-    return fn()
+def get_theme(_: str | None) -> Theme:
+    """Return the single default theme. Name is ignored for now."""
+    return default_theme()
 
 
 # --- Size resolution helpers ---
