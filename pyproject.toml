@@ -5,14 +5,13 @@ build-backend = "hatchling.build"
 [project]
 name = "scriber"
 version = "0.1.0"
-description = "Shadcn-inspired, Streamlit-like PDF builder for Python"
-authors = [{ name = "Your Name" }]
+description = "Build PDFs in Python easily using a component-based structure."
+authors = [{ name = "Fabian Serrano" }]
 requires-python = ">=3.10"
 dependencies = [
-  "matplotlib>=3.10.6",
   "reportlab>=3.6",
 ]
-readme = "AGENTS.md"
+readme = "README.md"
 license = { text = "Proprietary" }
 
 [project.urls]

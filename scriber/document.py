@@ -36,10 +36,14 @@ class Document:
     settings: Settings = field(default_factory=default_settings)
     # Simple header/footer configuration
     header: object | None = None  # str or callable(canvas, doc_rl, doc)
+    header_align: str = "left"
     footer: object | None = None  # str or callable(canvas, doc_rl, doc)
     page_numbers: object | None = "xofy"  # 'x', 'xofy', False
 
     def __post_init__(self) -> None:
+        self.header_align = (self.header_align or "left").lower()
+        if self.header_align not in {"left", "right", "center"}:
+            self.header_align = "left"
         self.root = ColumnNode(gap=self.theme.spacing["md"])  # default vertical flow
 
     def __enter__(self) -> "Document":

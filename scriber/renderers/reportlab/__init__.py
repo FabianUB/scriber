@@ -137,7 +137,17 @@ def render(doc: Document, output_path: str) -> None:
                 canv.setFont(doc.theme.typography["font"], 10)
                 canv.setFillColor(doc.theme.colors["muted"])  # muted
                 y = rl_doc.height + rl_doc.topMargin + 10
-                canv.drawString(rl_doc.leftMargin, y, str(doc.header))
+                text = str(doc.header)
+                align = getattr(doc, 'header_align', 'left') or 'left'
+                align = align.lower()
+                if align == 'right':
+                    x = rl_doc.leftMargin + rl_doc.width
+                    canv.drawRightString(x, y, text)
+                elif align == 'center':
+                    x = rl_doc.leftMargin + (rl_doc.width / 2.0)
+                    canv.drawCentredString(x, y, text)
+                else:
+                    canv.drawString(rl_doc.leftMargin, y, text)
                 canv.restoreState()
         # Footer
         if doc.footer:

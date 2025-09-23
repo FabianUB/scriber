@@ -17,6 +17,7 @@ def document(
     decimals: Optional[int] = None,
     font: Optional[str] = None,
     header: Optional[object] = None,
+    header_align: str = "left",
     footer: Optional[object] = None,
     page_numbers: Optional[object] = "xofy",
 ):
@@ -49,6 +50,8 @@ def document(
     if decimals is not None:
         settings_obj.number_decimals = int(decimals)
 
+    header_align_value = (header_align or "left").lower()
+
     return _Document(
         output_path=output_path,
         size=size,
@@ -56,6 +59,7 @@ def document(
         theme=theme_obj,
         settings=settings_obj,
         header=header,
+        header_align=header_align_value,
         footer=footer,
         page_numbers=page_numbers,
     )

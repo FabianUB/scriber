@@ -3,7 +3,16 @@ from scriber.document import page
 
 
 def build_showcase():
-    with pdf.document("examples/components/output_components_showcase.pdf"):
+    header_text = "Scriber Components Showcase"
+    footer_text = "Scriber Components Showcase — Footer"
+
+    with pdf.document(
+        "examples/components/output_components_showcase.pdf",
+        header=header_text,
+        header_align="right",
+        footer=footer_text,
+        page_numbers="xofy",
+    ):
         with page():
             ui.h2("Components Showcase")
             ui.text("A quick tour of commonly used components.")
@@ -36,7 +45,7 @@ def build_showcase():
                 {"Product": "B", "Qty": 5, "Price": 9.0},
                 {"Product": "C", "Qty": 12, "Price": 1.25},
             ]
-            ui.table(data, zebra=True, compact=True, formats={"Price": "currency"}, header_align=["left", "center", "right"]) 
+            ui.table(data, zebra=True, compact=True, formats={"Price": "currency"}, header_align=["left", "center", "right"])
 
             # Optional chart if matplotlib is present
             try:
@@ -54,4 +63,3 @@ def build_showcase():
 
 if __name__ == "__main__":
     build_showcase()
-
