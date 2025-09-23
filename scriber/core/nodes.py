@@ -106,6 +106,46 @@ class TableNode(Node):
         )
 
 
+
+@dataclass
+class CoverNode(Node):
+    def __init__(self, title: str, subtitle: Optional[str] = None, meta: Optional[list] = None, align: str = "center", page_break: bool = True, **props: Any) -> None:
+        super().__init__(
+            "cover",
+            {
+                "title": title,
+                "subtitle": subtitle,
+                "meta": meta or [],
+                "align": align,
+                "page_break": page_break,
+                **props,
+            },
+        )
+
+
+@dataclass
+class TOCNode(Node):
+    def __init__(
+        self,
+        title: Optional[str] = None,
+        depth: int = 3,
+        dot_leader: bool = True,
+        page_break: bool = True,
+        title_align: str = "left",
+        **props: Any,
+    ) -> None:
+        super().__init__(
+            "toc",
+            {
+                "title": title,
+                "depth": depth,
+                "dot_leader": dot_leader,
+                "page_break": page_break,
+                "title_align": title_align,
+                **props,
+            },
+        )
+
 # Containers
 @dataclass
 class ContainerNode(Node):

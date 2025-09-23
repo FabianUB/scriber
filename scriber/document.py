@@ -44,6 +44,12 @@ class Document:
         self.header_align = (self.header_align or "left").lower()
         if self.header_align not in {"left", "right", "center"}:
             self.header_align = "left"
+        self._heading_counter = 0
+        self._has_toc = False
+        self._toc_depth = 0
+        self._outline_depth = 3
+        self._story_started = False
+        self._last_flowable_pagebreak = False
         self.root = ColumnNode(gap=self.theme.spacing["md"])  # default vertical flow
 
     def __enter__(self) -> "Document":

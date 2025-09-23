@@ -12,6 +12,8 @@ from .core.nodes import (
     FigureNode,
     TableNode,
     TextNode,
+    CoverNode,
+    TOCNode,
 )
 from .document import current_container, get_current_document
 from .components.layout import separator as separator, labeled_separator as labeled_separator
@@ -165,3 +167,50 @@ def table(data, columns: Optional[list] = None, align: Optional[object] = None, 
 
 def figure(obj, width: Optional[float] = None, height: Optional[float] = None, dpi: int = 144, align: str = "start", caption: Optional[str] = None, **props):
     current_container().add(FigureNode(obj=obj, width=width, height=height, dpi=dpi, align=align, caption=caption, **props))
+
+
+def cover(
+    title: str,
+    subtitle: Optional[str] = None,
+    meta: Optional[object] = None,
+    *,
+    align: str = "center",
+    page_break: bool = True,
+    **props,
+):
+    """Insert a cover page with a title, optional subtitle, and metadata rows."""
+    doc = get_current_document()
+    if meta is None:
+        meta_items = []
+    elif isinstance(meta, dict):
+        meta_items = list(meta.items())
+    else:
+        meta_items = list(meta)  # type: ignore[arg-type]
+    node = CoverNode(title=title, subtitle=subtitle, meta=meta_items, align=align, page_break=page_break, **props)
+    doc.root.add(node)
+
+
+def toc(
+    title: Optional[str] = "Table of Contents",
+    *,
+    depth: int = 3,
+    dot_leader: bool = True,
+    page_break: bool = True,
+    title_align: str = "left",
+    **props,
+):
+    """Insert a generated table of contents based on document headings."""
+    doc = get_current_document()
+    depth = max(1, min(int(depth), 6))
+    node = TOCNode(
+        title=title,
+        depth=depth,
+        dot_leader=dot_leader,
+        page_break=page_break,
+        title_align=title_align,
+        **props,
+    )
+    doc.root.add(node)
+    doc._has_toc = True
+    doc._toc_depth = max(getattr(doc, "_toc_depth", 1), depth)
+    doc._outline_depth = max(getattr(doc, "_outline_depth", 1), depth)

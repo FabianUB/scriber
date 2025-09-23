@@ -20,8 +20,11 @@ def build_report():
         plt = None
 
     with pdf.document("examples/reports/output_kpi_report_shadcn.pdf", size="A4", margin=36, theme="shadcn"):
+        ui.cover("Acme Corp — KPI Report", subtitle="Q3 2024 Performance Brief", meta={"Prepared By": "Ops Analytics", "Date": "2024-09-30"})
+        ui.toc(title="Contents", depth=3)
+
         with page():
-            ui.h2("Acme Corp — Q3 KPI Report")
+            ui.h2("Executive Summary")
             ui.text("Confidential — Internal use only", muted=True)
 
             ui.spacer("lg")

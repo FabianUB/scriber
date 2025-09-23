@@ -6,6 +6,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
+    PageBreak,
 )
 from reportlab.pdfgen import canvas
 
@@ -119,9 +120,20 @@ def render(doc: Document, output_path: str) -> None:
     styles = _styles(doc)
     story: List[Flowable] = []
 
+    doc._heading_counter = getattr(doc, "_heading_counter", 0)
+    doc._outline_depth = getattr(doc, "_outline_depth", 3)
+    doc._toc_depth = getattr(doc, "_toc_depth", 0)
+    doc._has_toc = getattr(doc, "_has_toc", False)
+    doc._story_started = False
+    doc._last_flowable_pagebreak = getattr(doc, "_last_flowable_pagebreak", False)
+
     # root is a Column; iterate children (pages/containers)
     for child in doc.root.children:
-        story.extend(_to_flowables(doc, child, styles))
+        flows = _to_flowables(doc, child, styles)
+        if flows:
+            story.extend(flows)
+            doc._story_started = True
+            doc._last_flowable_pagebreak = isinstance(flows[-1], PageBreak)
 
     # Page decorations: header/footer and page numbers
     def _draw_header_footer(canv, rl_doc):
@@ -164,6 +176,35 @@ def render(doc: Document, output_path: str) -> None:
                 canv.drawString(rl_doc.leftMargin, y, str(doc.footer))
                 canv.restoreState()
 
+    def _after_flowable(flow):
+        level = getattr(flow, '_scriber_heading_level', None)
+        if level is None:
+            return
+        text_value = getattr(flow, '_scriber_heading_text', '')
+        bookmark = getattr(flow, '_scriber_bookmark_name', None)
+        outline_depth = getattr(doc, '_outline_depth', 3)
+        if bookmark:
+            try:
+                pdf.canv.bookmarkPage(bookmark)
+            except Exception:
+                pass
+        if bookmark and level < max(outline_depth, 0):
+            try:
+                pdf.canv.addOutlineEntry(text_value, bookmark, level=level, closed=False)
+            except Exception:
+                pass
+        if getattr(doc, '_has_toc', False) and level < max(getattr(doc, '_toc_depth', 0), 0):
+            try:
+                page_number = pdf.canv.getPageNumber()
+            except Exception:
+                page_number = 0
+            try:
+                pdf.notify('TOCEntry', (level, text_value, page_number, bookmark))
+            except Exception:
+                pass
+
+    pdf.afterFlowable = _after_flowable
+
     # Page numbering canvas
     class NumberedCanvas(canvas.Canvas):
         def __init__(self, *args, **kwargs):
@@ -205,7 +246,11 @@ def render(doc: Document, output_path: str) -> None:
             self.drawRightString(x, y, label)
             self.restoreState()
 
-    pdf.build(story, onFirstPage=_draw_header_footer, onLaterPages=_draw_header_footer, canvasmaker=NumberedCanvas)
+    build_kwargs = dict(onFirstPage=_draw_header_footer, onLaterPages=_draw_header_footer, canvasmaker=NumberedCanvas)
+    if getattr(doc, '_has_toc', False):
+        pdf.multiBuild(story, **build_kwargs)
+    else:
+        pdf.build(story, **build_kwargs)
 
 
 def _text_flowable(doc, node, styles): return _text_handler(doc, node,
