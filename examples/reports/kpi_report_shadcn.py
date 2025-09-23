@@ -7,7 +7,7 @@ def kpi_card(label: str, value: str, delta: str = None, variant: str = "default"
         ui.text(label, muted=True)
         ui.spacer("s")
         ui.h2(value)
-        ui.spacer(1.5)
+        ui.spacer("s")
         if delta:
             ui.badge(delta, variant=variant, size="sm")
 
