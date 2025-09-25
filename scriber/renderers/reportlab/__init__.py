@@ -20,6 +20,7 @@ from ...core.nodes import (
     SeparatorNode,
     SpacerNode,
     FigureNode,
+    ImageNode,
     TableNode,
     LabeledSeparatorNode,
     TextNode,
@@ -39,6 +40,7 @@ from .handlers.button import button_flowable as _button_handler
 from .handlers.card import card_flowables as _card_handler
 from .handlers.table import table_flowables as _table_handler
 from .handlers.figure import figure_flowables as _figure_handler
+from .handlers.image import image_flowables as _image_handler
 from ...settings import Settings
 from ...theme.tokens import size_token
 from .base import create_styles
@@ -890,6 +892,8 @@ def _to_flowables(doc: Document, node: Node, styles) -> List[Flowable]:
         return [_spacer_flowable(doc, node, styles)]
     if isinstance(node, FigureNode):
         return _figure_flowables(doc, node, styles)
+    if isinstance(node, ImageNode):
+        return _image_flowables(doc, node, styles)
     if isinstance(node, TableNode):
         return _table_flowables(doc, node, styles)
     if isinstance(node, LabeledSeparatorNode):
@@ -911,6 +915,10 @@ def _badge_flowable(doc: Document, node: BadgeNode, styles) -> Table:
 
 def _button_flowable(doc: Document, node: ButtonNode, styles) -> Table:
     return _button_handler(doc, node, styles)
+
+
+def _image_flowables(doc: Document, node: ImageNode, styles) -> List[Flowable]:
+    return _image_handler(doc, node, styles)
 
 
 def _card_flowables(doc: Document, node: CardNode, styles) -> List[Flowable]:

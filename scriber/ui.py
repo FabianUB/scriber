@@ -10,6 +10,7 @@ from .core.nodes import (
     RowNode,
     SpacerNode,
     FigureNode,
+    ImageNode,
     TableNode,
     TextNode,
     CoverNode,
@@ -167,6 +168,47 @@ def table(data, columns: Optional[list] = None, align: Optional[object] = None, 
 
 def figure(obj, width: Optional[float] = None, height: Optional[float] = None, dpi: int = 144, align: str = "start", caption: Optional[str] = None, **props):
     current_container().add(FigureNode(obj=obj, width=width, height=height, dpi=dpi, align=align, caption=caption, **props))
+
+
+def image(
+    source,
+    width: Optional[object] = None,
+    height: Optional[object] = None,
+    *,
+    fit: str = "contain",
+    align: str = "start",
+    caption: Optional[str] = None,
+    cache_key: Optional[str] = None,
+    **props,
+):
+    """Embed an image from a filesystem path or HTTP(S) URL."""
+
+    doc = get_current_document()
+
+    def _resolve_dim(value, default_key: str = "lg") -> Optional[float]:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return spacing_value(doc.theme, value, default_key=default_key)
+        try:
+            return float(value)
+        except Exception:
+            return None
+
+    width_pts = _resolve_dim(width)
+    height_pts = _resolve_dim(height)
+
+    node = ImageNode(
+        source=source,
+        width=width_pts,
+        height=height_pts,
+        fit=fit,
+        align=align,
+        caption=caption,
+        cache_key=cache_key,
+        **props,
+    )
+    current_container().add(node)
 
 
 def cover(

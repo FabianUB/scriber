@@ -17,6 +17,7 @@ from .handlers.button import button_flowable
 from .handlers.badge import badge_flowable
 from .handlers.card import card_flowables
 from .handlers.document import cover_flowables, toc_flowables
+from .handlers.image import image_flowables
 
 
 Handler = Callable[[object, Node, object], List[Flowable]]
@@ -36,6 +37,7 @@ HANDLERS: Dict[str, Handler] = {
     "column": column_flowables,
     "spacer": _wrap_single(spacer_flowable),
     "figure": figure_flowables,
+    "image": image_flowables,
     "table": table_flowables,
     "text": _wrap_single(text_flowable),
     "button": _wrap_single(button_flowable),

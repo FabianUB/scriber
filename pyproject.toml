@@ -20,3 +20,6 @@ Homepage = "https://example.com/"
 [tool.uv]
 # uv will read standard PEP 621 metadata; this section can later host settings.
 
+[project.optional-dependencies]
+images = ["requests>=2.32"]
+

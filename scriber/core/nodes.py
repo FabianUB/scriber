@@ -70,6 +70,34 @@ class FigureNode(Node):
 
 
 @dataclass
+class ImageNode(Node):
+    def __init__(
+        self,
+        source: Any,
+        width: Optional[float] = None,
+        height: Optional[float] = None,
+        fit: str = "contain",
+        align: str = "start",
+        caption: Optional[str] = None,
+        cache_key: Optional[str] = None,
+        **props: Any,
+    ) -> None:
+        super().__init__(
+            "image",
+            {
+                "source": source,
+                "width": width,
+                "height": height,
+                "fit": fit,
+                "align": align,
+                "caption": caption,
+                "cache_key": cache_key,
+                **props,
+            },
+        )
+
+
+@dataclass
 class TableNode(Node):
     def __init__(
         self,
