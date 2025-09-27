@@ -23,3 +23,13 @@ Homepage = "https://example.com/"
 [project.optional-dependencies]
 images = ["requests>=2.32"]
 
+[tool.hatch.build.targets.wheel]
+packages = ["scriber"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "scriber",
+  "README.md",
+  "pyproject.toml",
+  "uv.lock",
+]

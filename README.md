@@ -14,11 +14,12 @@
 </p>
 
 <p align="center">
-  <a href="#key-features">Features</a> •
-  <a href="#how-to-use">Quickstart</a> •
-  <a href="#how-to-use">Installation</a> •
-  <a href="#how-to-use">Docs</a> •
-  <a href="#how-to-use">Credits</a> 
+  <a href="#features">Features</a> •
+  <a href="#quickstart">Quickstart</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#docs">Docs</a> •
+  <a href="#to-do">TO-DO</a> •
+  <a href="#credits">Credits</a> 
 </p>
 
 ## Features
@@ -61,6 +62,7 @@ This code will create the following PDF:
 
 ## Installation
 
+-- Working on uploading Scriber to Python Package Index --
 
 ## Components
 
@@ -104,7 +106,8 @@ margins.
 
 ## Docs
 
+## TO-DO
 
 ## Credits
 
-<a href="https://www.reportlab.com" target="_blank">ReportLab</a> - The tool used for rendering the PDFs.
+<a href="https://www.reportlab.com" target="_blank">ReportLab</a> - Used for rendering the PDFs.
