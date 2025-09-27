@@ -15,23 +15,96 @@
 
 <p align="center">
   <a href="#key-features">Features</a> •
-  <a href="#how-to-use">Examples</a> •
-  <a href="#how-to-use">Download</a> •
+  <a href="#how-to-use">Quickstart</a> •
+  <a href="#how-to-use">Installation</a> •
   <a href="#how-to-use">Docs</a> •
   <a href="#how-to-use">Credits</a> 
 </p>
 
-![screenshot]()
-
 ## Features
 
+This tool allows you to easily build PDF documents using a component-based architecture, similar to frameworks like <a href="https://streamlit.io" target="_blank">Streamlit</a>.
+
+It uses a simple syntax that let's you iterate through prototypes fast, so you can easily adjust the PDFs to your liking.
 
 
-## Download
+## Quickstart
 
+An example of how to create a basic document using Scriber:
+
+```python
+from scriber import pdf, ui
+
+with pdf.document("quickstart.pdf") as doc:
+  ui.text("Quarterly Overview")
+  ui.text("A minimal report built with plain text, labeled separators, and tables")
+
+  ui.labeled_separator("Key Metrics")
+  ui.table(
+      [
+          {"Metric": "Revenue", "Q2 FY24": "$1.8M", "Δ vs Q1": "+5%"},
+          {"Metric": "Active Users", "Q2 FY24": "12,430", "Δ vs Q1":"+7%"},
+          {"Metric": "Churn", "Q2 FY24": "3.2%", "Δ vs Q1": "-0.4%"},
+      ],
+      columns=["Metric", "Q2 FY24", "Δ vs Q1"],
+      zebra=True,
+  )
+
+  ui.labeled_separator("Notes")
+  ui.text("• Metrics pulled from the analytics warehouse on 2024-07-05.")
+  ui.text("• Refresh the report by rerunning this script after the nextdata sync.")
+```
+
+This code will create the following PDF:
+
+<img src="https://i.imgur.com/4ogWOL5.png">
+
+## Installation
+
+
+## Components
+
+### Containers
+
+- row — Horizontal container with configurable gap and justification.
+- column — Vertical stack with optional gap and growth hints.
+- card — Padded container with optional radius and grow props.
+
+### Typography & Numbers
+
+- text — Body or muted paragraph text with variant overrides.
+- h1 — Large heading styled via theme tokens.
+- h2 — Medium heading variant.
+- h3 — Smaller heading variant.
+- number — Formats numeric values (currency, percent, etc.) using document
+settings.
+
+### UI Elements
+
+- badge — Pill-style label supporting variants.
+- button — Action button with variant-driven styling.
+
+### Layout & Spacing
+
+- separator — Horizontal rule with thickness, color, and margin controls.
+- labeled_separator — Separator with centered label and configurable gap/
+margins.
+- spacer — Vertical whitespace helper using spacing tokens.
+
+### Data & Media
+
+- table — Tabular data renderer with alignment and zebra striping options, supports Pandas and Polars dataframes.
+- figure — Embeds Matplotlib/Plotly/Altair/Plotnine figures with sizing and captions
+- image — Embeds local or remote images with fit, alignment, and caching
+
+### Document Structure
+
+- cover — Full-page cover with title, subtitle, and metadata rows
+- toc — Generated table of contents with depth and dot leader controls
 
 ## Docs
 
 
 ## Credits
 
+<a href="https://www.reportlab.com" target="_blank">ReportLab</a> - The tool used for rendering the PDFs.

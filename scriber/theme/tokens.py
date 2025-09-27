@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from reportlab.lib import colors
+import warnings
 
 
 @dataclass
@@ -76,10 +77,22 @@ def spacing_value(theme: Theme, value, *, default_key: str = "md") -> float:
     if value is None:
         return float(theme.spacing[default_key])
     if isinstance(value, str):
-        return float(theme.spacing.get(value, theme.spacing[default_key]))
+        if value in theme.spacing:
+            return float(theme.spacing[value])
+        warnings.warn(
+            f"Invalid spacing token '{value}'. Valid tokens: {sorted(theme.spacing.keys())}. "
+            "Provide a numeric value (points) or a valid token.",
+            stacklevel=3,
+        )
+        return float(theme.spacing[default_key])
     try:
         return float(value)
     except Exception:
+        warnings.warn(
+            f"Unable to interpret spacing value '{value}'. Use a numeric value (points) or one of "
+            f"{sorted(theme.spacing.keys())}.",
+            stacklevel=3,
+        )
         return float(theme.spacing[default_key])
 
 
@@ -89,14 +102,25 @@ def size_token(theme: Theme, value, *, choices=("sm", "md", "lg")) -> str:
     - If value is a valid token: return it
     - If numeric: map by thresholds using theme.spacing: <= sm -> sm, <= md -> md, else lg
     """
-    if isinstance(value, str) and value in choices:
-        return value
+    if isinstance(value, str):
+        if value in choices:
+            return value
+        warnings.warn(
+            f"Invalid size token '{value}'. Valid tokens: {sorted(choices)}. "
+            "Provide a numeric value to map automatically.",
+            stacklevel=3,
+        )
+        return "md"
     # Numeric mapping by spacing thresholds
     sm = float(theme.spacing.get("sm", 8))
     md = float(theme.spacing.get("md", 12))
     try:
         v = float(value)
     except Exception:
+        warnings.warn(
+            f"Unable to interpret size value '{value}'. Use a numeric value or one of {sorted(choices)}.",
+            stacklevel=3,
+        )
         return "md"
     if v <= sm:
         return "sm"
