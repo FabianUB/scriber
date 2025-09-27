@@ -24,9 +24,9 @@
 
 ## Features
 
-This tool allows you to easily build PDF documents using a component-based architecture, similar to frameworks like <a href="https://streamlit.io" target="_blank">Streamlit</a>.
+Scrber allows you to easily build PDF documents using a component-based architecture, similar to frameworks like <a href="https://streamlit.io" target="_blank">Streamlit</a>.
 
-It uses a simple syntax that let's you iterate through prototypes fast, so you can easily adjust the PDFs to your liking.
+It provides a simple model for creating PDF files while seamlessly integrating data from popular Python libraries like pandas and matplotlib.
 
 
 ## Quickstart
@@ -64,13 +64,9 @@ This code will create the following PDF:
 
 ## Installation
 
-Open a terminal and run:
-
 ```shell
 pip install scriber-pdf
 ```
-
-Once you have written a file with the components of a PDF, just run the python file to generate the PDF.
 
 If you want to use an image from an URL in the image component, you will also need <a href="https://pypi.org/project/requests/">requests</a> available in your project.
 
@@ -106,17 +102,17 @@ margins.
 ### Data & Media
 
 - table — Tabular data renderer with alignment and zebra striping options, supports Pandas and Polars dataframes.
-- figure — Embeds Matplotlib/Plotly/Altair/Plotnine figures with sizing and captions
-- image — Embeds local or remote images with fit, alignment, and caching
+- figure — Embeds Matplotlib/Plotly/Altair/Plotnine figures with sizing and captions.
+- image — Embeds local or remote images with fit, alignment, and caching.
 
 ### Document Structure
 
-- cover — Full-page cover with title, subtitle, and metadata rows
-- toc — Generated table of contents with depth and dot leader controls
+- cover — Full-page cover with title, subtitle, and metadata rows.
+- toc — Generated table of contents with depth and dot leader controls.
 
 ## Docs
 
-The documentation for this package is provided on the <a href="https://github.com/FabianUB/scriber/wiki#scriber-pdf-reference">Wiki<a> section of this repository.
+The documentation for Scriber is provided on the <a href="https://github.com/FabianUB/scriber/wiki#scriber-pdf-reference">Wiki<a> section of this repository.
 
 ## TO-DO
 
@@ -154,6 +150,9 @@ The documentation for this package is provided on the <a href="https://github.co
 - [ ] Layout rules
   - keep-together / keep-with-next for headings + following paragraphs.
   - make UI cards easier to use + better auto formatting
+
+- [ ] Outputs
+  - Exporting to non-PDF formats (.doc, docx, .tex...)
 
 - [ ] Performance
   - Internal cache for repeated paragraphs, images.
