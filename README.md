@@ -70,9 +70,9 @@ Open a terminal and run:
 pip install scriber-pdf
 ```
 
-Once you have written a file with the components of a PDF, just use python3 <name_of_file.py> to generate the PDF. 
+Once you have written a file with the components of a PDF, just run the python file to generate the PDF.
 
-If you want to use an image from an URL in the image component, you will also need <a href="https://pypi.org/project/requests/">requests</a> to be in your project.
+If you want to use an image from an URL in the image component, you will also need <a href="https://pypi.org/project/requests/">requests</a> available in your project.
 
 ## Components
 
@@ -132,10 +132,6 @@ The documentation for this package is provided on the <a href="https://github.co
   - Auto number for figures/tables; `ui.caption()` with cross-references.
 
 - [ ] Theme: dark preset + high-contrast preset.
-
-- [ ] Font management
-  - Register custom TTF/OTF, use Inter by default; bold/italic variants.
-  - Font fallback for Unicode.
 
 - [ ] Links & annotations
   - Clickable buttons/links via `canvas.linkURL` regions.
