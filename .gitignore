@@ -19,5 +19,6 @@ coverage.xml
 examples/*.pdf
 AGENTS.md
 TODO.md
+WIKI.md
 .docs/
 docs/

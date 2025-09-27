@@ -35,12 +35,13 @@ An example of how to create a basic document using Scriber:
 
 ```python
 from scriber import pdf, ui
-
 with pdf.document("quickstart.pdf") as doc:
-  ui.text("Quarterly Overview")
-  ui.text("A minimal report built with plain text, labeled separators, and tables")
+  ui.h1("Quarterly Overview")
+  ui.h2("A minimal report built with plain text, labeled separators, and tables.")
+  ui.spacer("2xl")
 
   ui.labeled_separator("Key Metrics")
+  ui.spacer("md")
   ui.table(
       [
           {"Metric": "Revenue", "Q2 FY24": "$1.8M", "Δ vs Q1": "+5%"},
@@ -51,9 +52,10 @@ with pdf.document("quickstart.pdf") as doc:
       zebra=True,
   )
 
+  ui.spacer("2xl")
   ui.labeled_separator("Notes")
   ui.text("• Metrics pulled from the analytics warehouse on 2024-07-05.")
-  ui.text("• Refresh the report by rerunning this script after the nextdata sync.")
+  ui.text("• Refresh the report by rerunning this script after the next data sync.")
 ```
 
 This code will create the following PDF:
@@ -62,7 +64,15 @@ This code will create the following PDF:
 
 ## Installation
 
--- Working on uploading Scriber to Python Package Index --
+Open a terminal and run:
+
+```shell
+pip install scriber-pdf
+```
+
+Once you have written a file with the components of a PDF, just use python3 <name_of_file.py> to generate the PDF. 
+
+If you want to use an image from an URL in the image component, you will also need <a href="https://pypi.org/project/requests/">requests</a> to be in your project.
 
 ## Components
 
@@ -106,8 +116,52 @@ margins.
 
 ## Docs
 
+The documentation for this package is provided on the <a href="https://github.com/FabianUB/scriber/wiki#scriber-pdf-reference">Wiki<a> section of this repository.
+
 ## TO-DO
 
+- [ ] Typography / Fonts
+  - Register custom TTF/OTF, bold/italic variants; default to Inter/Source families.
+  - Hyphenation/justification improvements; keep-with-next for headings.
+
+- [ ] Table Style Presets + Auto Fit
+  - Presets: minimal, classic, condensed.
+  - Auto-fit column widths based on content min/max; ellipsis for overflow.
+
+- [ ] Captions + Numbering
+  - Auto number for figures/tables; `ui.caption()` with cross-references.
+
+- [ ] Theme: dark preset + high-contrast preset.
+
+- [ ] Font management
+  - Register custom TTF/OTF, use Inter by default; bold/italic variants.
+  - Font fallback for Unicode.
+
+- [ ] Links & annotations
+  - Clickable buttons/links via `canvas.linkURL` regions.
+
+- [ ] Grid / Multi-column layouts
+  - Two/three-column text flows; sidebars; consistent gutters.
+
+- [ ] Callouts / KPI components
+  - Info/warning/success boxes with icons, subtle backgrounds, optional titles.
+
+- [ ] Links & Cross-refs
+  - Clickable links and internal document anchors.
+
+- [ ] Grid and Stack containers (absolute or z-index overlays).
+
+- [ ] HTML snippet support (WeasyPrint-based renderer as optional backend).
+
+- [ ] CLI: `scriber build examples/invoice_shadcn.py -o out.pdf`.
+
+- [ ] Layout rules
+  - keep-together / keep-with-next for headings + following paragraphs.
+  - make UI cards easier to use + better auto formatting
+
+- [ ] Performance
+  - Internal cache for repeated paragraphs, images.
+  
 ## Credits
 
 <a href="https://www.reportlab.com" target="_blank">ReportLab</a> - Used for rendering the PDFs.
