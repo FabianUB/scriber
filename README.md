@@ -24,7 +24,7 @@
 
 ## Features
 
-Scrber allows you to easily build PDF documents using a component-based architecture, similar to frameworks like <a href="https://streamlit.io" target="_blank">Streamlit</a>.
+Scriber allows you to easily build PDF documents using a component-based architecture, similar to frameworks like <a href="https://streamlit.io" target="_blank">Streamlit</a>.
 
 It provides a simple model for creating PDF files while seamlessly integrating data from popular Python libraries like pandas and matplotlib.
 
