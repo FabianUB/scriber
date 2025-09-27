@@ -26,7 +26,7 @@
 
 Scriber allows you to easily build PDF documents using a component-based architecture, similar to frameworks like <a href="https://streamlit.io" target="_blank">Streamlit</a>.
 
-It provides a simple model for creating PDF files while seamlessly integrating data from popular Python libraries like pandas and matplotlib.
+It provides a simple model for creating PDF files while seamlessly integrating data from popular Python libraries such as pandas and matplotlib, enabling direct access to tabular data, visualizations, and analytical outputs without additional conversion steps. This makes it an ideal choice for generating automated reports, business intelligence summaries, or any workflow that requires consistent, data-driven documentation.
 
 
 ## Quickstart
@@ -152,7 +152,7 @@ The documentation for Scriber is provided on the <a href="https://github.com/Fab
   - make UI cards easier to use + better auto formatting
 
 - [ ] Outputs
-  - Exporting to non-PDF formats (.doc, docx, .tex...)
+  - Exporting to non-PDF formats (.doc, .docx, .tex...)
 
 - [ ] Performance
   - Internal cache for repeated paragraphs, images.
