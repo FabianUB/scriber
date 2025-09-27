@@ -33,3 +33,8 @@ include = [
   "pyproject.toml",
   "uv.lock",
 ]
+
+[dependency-groups]
+dev = [
+    "twine>=6.2.0",
+]
